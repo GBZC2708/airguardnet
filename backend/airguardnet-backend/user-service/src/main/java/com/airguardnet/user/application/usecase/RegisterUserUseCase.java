@@ -6,22 +6,34 @@ import com.airguardnet.user.domain.repository.UserRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.airguardnet.common.exception.UnauthorizedException;
+import com.airguardnet.common.exception.NotFoundException; // si lo usas
+
 
 import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
 public class RegisterUserUseCase {
+
     private final UserRepositoryPort userRepositoryPort;
     private final PasswordEncoder passwordEncoder;
 
-    public User register(String name, String lastName, String email, String rawPassword, String role, Long planId) {
+    public User register(String name,
+                         String lastName,
+                         String email,
+                         String rawPassword,
+                         String role,
+                         Long planId) {
+
         userRepositoryPort.findByEmail(email).ifPresent(u -> {
             throw new ValidationException("Email already registered");
         });
+
         if (!isPasswordValid(rawPassword)) {
             throw new ValidationException("Password does not meet complexity requirements");
         }
+
         User user = User.builder()
                 .name(name)
                 .lastName(lastName)
@@ -33,6 +45,7 @@ public class RegisterUserUseCase {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
+
         return userRepositoryPort.save(user);
     }
 

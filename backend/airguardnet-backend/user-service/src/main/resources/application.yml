@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/airguardnet
     username: postgres
-    password: TU_PASSWORD_REAL
+    password: root
   jpa:
     hibernate:
       ddl-auto: none   # luego usaremos migraciones o generaremos schema, por ahora none/validate

@@ -1,52 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
-        <parent>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-parent</artifactId>
-                <version>3.4.12</version>
-                <relativePath/> <!-- lookup parent from repository -->
-        </parent>
-	<groupId>com.airguardnet</groupId>
+
+	<!-- El único parent: el pom raíz del backend -->
+	<parent>
+		<groupId>com.airguardnet</groupId>
+		<artifactId>airguardnet-backend</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
 	<artifactId>common</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>common</name>
-	<description>common</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<description>Shared classes for all AirGuardNet services</description>
+	<packaging>jar</packaging>
+
 	<properties>
 		<java.version>21</java.version>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
 
+	<dependencies>
+		<!-- Solo lo necesario para Page<T> -->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-commons</artifactId>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+			<!-- IMPORTANTE: desactivar repackage en este módulo -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

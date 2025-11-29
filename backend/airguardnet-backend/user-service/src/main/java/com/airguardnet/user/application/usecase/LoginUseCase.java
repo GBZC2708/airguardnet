@@ -10,6 +10,8 @@ import com.airguardnet.user.domain.repository.UserRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.airguardnet.common.exception.ValidationException;
+import com.airguardnet.common.exception.NotFoundException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 @Service
 @RequiredArgsConstructor
 public class LoginUseCase {
+
     private static final int DEFAULT_LOCK_THRESHOLD = 5;
     private static final int DEFAULT_LOCK_MINUTES = 15;
 
@@ -45,7 +48,9 @@ public class LoginUseCase {
                     .status(user.getStatus())
                     .planId(user.getPlanId())
                     .failedLoginCount(failed)
-                    .lockedUntil(failed >= DEFAULT_LOCK_THRESHOLD ? Instant.now().plus(DEFAULT_LOCK_MINUTES, ChronoUnit.MINUTES) : null)
+                    .lockedUntil(failed >= DEFAULT_LOCK_THRESHOLD
+                            ? Instant.now().plus(DEFAULT_LOCK_MINUTES, ChronoUnit.MINUTES)
+                            : null)
                     .createdAt(user.getCreatedAt())
                     .updatedAt(Instant.now())
                     .build();
@@ -81,6 +86,13 @@ public class LoginUseCase {
                 .ipAddress(ipAddress)
                 .createdAt(Instant.now())
                 .build());
-        return new LoginResult(user.getId(), user.getRole(), user.getPlanId(), user.getStatus(), user.getEmail(), user.getName());
+        return new LoginResult(
+                user.getId(),
+                user.getRole(),
+                user.getPlanId(),
+                user.getStatus(),
+                user.getEmail(),
+                user.getName()
+        );
     }
 }
