@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/airguardnet
+    username: postgres
+    password: TU_PASSWORD_REAL
+  jpa:
+    hibernate:
+      ddl-auto: none   # luego usaremos migraciones o generaremos schema, por ahora none/validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  application:
+    name: user-service
+
+logging:
+  level:
+    org.springframework: INFO

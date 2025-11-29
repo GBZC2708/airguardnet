@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/airguardnet
+    username: postgres
+    password: TU_PASSWORD_REAL
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  application:
+    name: device-service
+
+logging:
+  level:
+    org.springframework: INFO

@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: notification-service
+
+logging:
+  level:
+    org.springframework: INFO

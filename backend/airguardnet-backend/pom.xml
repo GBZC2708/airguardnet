@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.12</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.airguardnet</groupId>
+    <artifactId>airguardnet-backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>airguardnet-backend</name>
+    <description>AirGuardNet backend parent</description>
+
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+
+    <!-- aquí irán los submódulos -->
+    <modules>
+        <!-- common -->
+        <module>common</module>
+        <!-- user-service -->
+        <module>user-service</module>
+        <!-- device-service -->
+        <module>device-service</module>
+        <!-- notification-service -->
+        <module>notification-service</module>
+        <!-- api-gateway -->
+        <module>api-gateway</module>
+    </modules>
+
+    <!-- sin dependencias ni plugins en el padre por ahora -->
+</project>

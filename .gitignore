@@ -1,0 +1,36 @@
+# Maven
+target/
+*.iml
+*.class
+*.log
+*.jar
+*.war
+*.ear
+
+# IntelliJ
+.idea/
+*.iws
+*.ipr
+
+# VSCode
+.vscode/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Vite
+*.local
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
