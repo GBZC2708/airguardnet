@@ -15,11 +15,14 @@ public class GatewayController {
 
     private final RestTemplate restTemplate;
 
-    @Value("${services.user-service.url:http://localhost:8081}")
+    @Value("${airguardnet.services.user.base-url}")
     private String userServiceUrl;
 
-    @Value("${services.device-service.url:http://localhost:8082}")
+    @Value("${airguardnet.services.device.base-url}")
     private String deviceServiceUrl;
+
+    @Value("${airguardnet.services.notification.base-url}")
+    private String notificationServiceUrl;
 
     public GatewayController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -69,5 +72,69 @@ public class GatewayController {
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
         return restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+    }
+
+    // USERS - PLANS
+    @GetMapping("/users/plans")
+    public ResponseEntity<String> getPlans() {
+        String url = userServiceUrl + "/users/plans";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    @GetMapping("/users/plans/{planId}/features")
+    public ResponseEntity<String> getPlanFeatures(@PathVariable Long planId) {
+        String url = userServiceUrl + "/users/plans/" + planId + "/features";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    // DEVICE REPORTS AND CONFIGS
+    @GetMapping("/usage-reports")
+    public ResponseEntity<String> getUsageReports() {
+        String url = deviceServiceUrl + "/usage-reports";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    @GetMapping("/sensor-configs")
+    public ResponseEntity<String> getSensorConfigs() {
+        String url = deviceServiceUrl + "/sensor-configs";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    // CONFIG PARAMETERS
+    @GetMapping("/config-parameters")
+    public ResponseEntity<String> getConfigParameters() {
+        String url = userServiceUrl + "/config-parameters";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    @PutMapping("/config-parameters/{key}")
+    public ResponseEntity<String> upsertConfigParameter(@PathVariable String key, @RequestBody String body) {
+        String url = userServiceUrl + "/config-parameters/" + key;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        return restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+    }
+
+    // LOGS
+    @GetMapping("/access-logs")
+    public ResponseEntity<String> getAccessLogs() {
+        String url = userServiceUrl + "/access-logs";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    @GetMapping("/system-logs")
+    public ResponseEntity<String> getSystemLogs() {
+        String url = userServiceUrl + "/system-logs";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    // NOTIFICATIONS
+    @GetMapping("/notifications/test")
+    public ResponseEntity<String> notificationTest() {
+        String url = notificationServiceUrl + "/notifications/test";
+        return restTemplate.getForEntity(url, String.class);
     }
 }

@@ -5,6 +5,9 @@ import com.airguardnet.user.domain.repository.SystemLogRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 @RequiredArgsConstructor
 public class SystemLogRepositoryAdapter implements SystemLogRepositoryPort {
@@ -13,5 +16,13 @@ public class SystemLogRepositoryAdapter implements SystemLogRepositoryPort {
     @Override
     public SystemLog save(SystemLog log) {
         return systemLogJpaRepository.save(SystemLogEntity.fromDomain(log)).toDomain();
+    }
+
+    @Override
+    public List<SystemLog> findAllOrderedByCreatedAtDesc() {
+        return systemLogJpaRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(SystemLogEntity::toDomain)
+                .collect(Collectors.toList());
     }
 }
