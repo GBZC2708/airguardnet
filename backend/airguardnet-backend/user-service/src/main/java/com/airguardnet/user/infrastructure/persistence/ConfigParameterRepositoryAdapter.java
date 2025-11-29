@@ -5,12 +5,22 @@ import com.airguardnet.user.domain.repository.ConfigParameterRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class ConfigParameterRepositoryAdapter implements ConfigParameterRepositoryPort {
     private final ConfigParameterJpaRepository configParameterJpaRepository;
+
+    @Override
+    public List<ConfigParameter> findAll() {
+        return configParameterJpaRepository.findAll()
+                .stream()
+                .map(ConfigParameterEntity::toDomain)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public Optional<ConfigParameter> findByKey(String key) {
