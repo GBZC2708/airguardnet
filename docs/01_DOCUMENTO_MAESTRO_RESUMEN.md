@@ -3,9 +3,9 @@
 Este documento resume el contexto funcional y técnico del proyecto AirGuardNet.  
 Es la referencia fija para:
 
-- Chat 1: backend + web
-- Chat 2: app móvil
-- Chat 3: pruebas
+- Chat 1: backend + web  
+- Chat 2: app móvil  
+- Chat 3: pruebas  
 
 No se permite cambiar el alcance:  
 AirGuardNet se centra exclusivamente en polvo respirable usando el sensor PMS5003 (PM1, PM2.5, PM10).
@@ -53,7 +53,12 @@ Hardware lógico:
   - Batería LiPo 3.7V.
   - Módulo TP4056 (carga y protección).
   - MT3608 (step-up a 5V).
-  - Monitor de batería modelado como porcentaje 0–100 % a nivel de firmware/backend.
+
+Monitor de batería:
+
+- A nivel de firmware/backend el estado de batería se modela como porcentaje 0–100 %.  
+- A nivel de backend y base de datos, `battery_level` se manejará SIEMPRE como porcentaje 0–100.  
+- Si el firmware utiliza otra escala interna (por ejemplo 0–1), la conversión a 0–100 debe hacerse ANTES de enviar la lectura al backend.
 
 Ciclo básico del firmware:
 
@@ -94,13 +99,13 @@ Componentes:
 
 Microservicios lógicos en el backend (en un solo repo Maven multi-módulo):
 
-- user-service
+- user-service  
   - Usuarios, autenticación, roles, planes, logs de acceso, configuración global.
-- device-service
+- device-service  
   - Dispositivos, lecturas, alertas, incidencias, configuración de umbrales, notas técnicas, firmware.
-- notification-service
+- notification-service  
   - Notificaciones internas y push hacia la app móvil (via FCM más adelante).
-- api-gateway
+- api-gateway  
   - Entrada única /api/**, validación de JWT y enrutamiento a servicios.
 
 Base de datos:
@@ -126,11 +131,11 @@ Este modelo se detalla al nivel de columnas/campos en el archivo 02_BACKEND_ESPE
 - Las lecturas tratadas son exclusivamente PM1, PM2.5 y PM10 desde PMS5003.
 - El indicador principal para riesgo es PM2.5.
 - Se calcula:
-  - risk_index (0–100) basado en PM2.5 y thresholds configurables.
-  - air_quality_percent (0–100) como inverso del riesgo (100 = excelente).
-- Se generan alertas según comparaciones PM2.5 vs recommended_max y critical_threshold.
+  - `risk_index` (0–100) basado en PM2.5 y thresholds configurables.
+  - `air_quality_percent` (0–100) como inverso del riesgo (100 = excelente).
+- Se generan alertas según comparaciones PM2.5 vs `recommended_max` y `critical_threshold`.
 - El estado del dispositivo (ACTIVE, WARNING, CRITICAL, OFFLINE) se basa en:
-  - risk_index.
+  - `risk_index`.
   - tiempo desde la última comunicación (OFFLINE se calcula por job según parámetro global).
 
 ## 6. Web app (vista general)

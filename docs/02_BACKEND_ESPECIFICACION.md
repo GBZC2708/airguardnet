@@ -32,25 +32,25 @@ Estructura de módulos en `backend/airguardnet-backend`:
 
 Patrón de paquetes por servicio:
 
-- com.airguardnet.<service>.domain
-  - model
-  - repository
-  - service
-- com.airguardnet.<service>.application
-  - usecase
-- com.airguardnet.<service>.infrastructure
-  - persistence
-  - web
-  - security (si aplica)
-  - config
+- `com.airguardnet.<service>.domain`
+  - `model`
+  - `repository`
+  - `service`
+- `com.airguardnet.<service>.application`
+  - `usecase`
+- `com.airguardnet.<service>.infrastructure`
+  - `persistence`
+  - `web`
+  - `security` (si aplica)
+  - `config`
+
+Todos los servicios comparten una única base de datos PostgreSQL llamada `airguardnet`.
 
 ## 2. Modelo de datos detallado
 
-Todos los servicios comparten una única base de datos PostgreSQL llamada airguardnet.
-
 ### 2.1 Tablas de usuarios y seguridad (user-service)
 
-Tabla users:
+Tabla `users`:
 
 - id (PK, bigserial)
 - name (varchar)
@@ -66,7 +66,7 @@ Tabla users:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla plans:
+Tabla `plans`:
 
 - id (PK)
 - name (varchar: Básico, Estándar, Avanzado)
@@ -74,14 +74,14 @@ Tabla plans:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla plan_features:
+Tabla `plan_features`:
 
 - id (PK)
 - plan_id (FK → plans.id)
 - feature_key (varchar, ejemplo: ADVANCED_REPORTS, MULTI_DEVICE_VIEW)
 - enabled (boolean)
 
-Tabla access_logs:
+Tabla `access_logs`:
 
 - id (PK)
 - user_id (FK → users.id)
@@ -89,7 +89,7 @@ Tabla access_logs:
 - ip_address (varchar)
 - created_at (timestamp)
 
-Tabla system_logs:
+Tabla `system_logs`:
 
 - id (PK)
 - type (varchar: ERROR, WARNING, INFO)
@@ -97,7 +97,15 @@ Tabla system_logs:
 - message (text)
 - created_at (timestamp)
 
-Tabla config_parameters:
+Uso de `system_logs`:
+
+- La tabla `system_logs` se modela en `user-service` y es única para todo el sistema.
+- Otros servicios (por ejemplo `device-service`) pueden escribir en esta tabla mediante:
+  - un puerto de dominio expuesto por `user-service` (por ejemplo un `SystemLogRepositoryPort` compartido), o
+  - un cliente REST interno que llame a un endpoint de logging de `user-service`.
+- No se creará una tabla de logs adicional ni un servicio nuevo de logging. Todos los logs de sistema se centralizan en `system_logs`.
+
+Tabla `config_parameters`:
 
 - id (PK)
 - key (varchar)
@@ -105,7 +113,7 @@ Tabla config_parameters:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla config_change_logs:
+Tabla `config_change_logs`:
 
 - id (PK)
 - parameter_key (varchar)
@@ -114,7 +122,7 @@ Tabla config_change_logs:
 - changed_by_id (FK → users.id)
 - changed_at (timestamp)
 
-Tabla version_history:
+Tabla `version_history`:
 
 - id (PK)
 - version_number (varchar, ejemplo: v1.0.0)
@@ -123,7 +131,7 @@ Tabla version_history:
 
 ### 2.2 Tablas de dispositivos y sensores (device-service)
 
-Tabla devices:
+Tabla `devices`:
 
 - id (PK)
 - device_uid (varchar, único)
@@ -136,7 +144,12 @@ Tabla devices:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla firmware_versions:
+Nota sobre `battery_level` en `devices` y `readings`:
+
+- `battery_level` se almacena SIEMPRE como porcentaje 0–100.  
+- Cualquier valor recibido fuera de ese rango se normaliza (clamp) a 0–100 antes de guardarlo.
+
+Tabla `firmware_versions`:
 
 - id (PK)
 - version_code (varchar, ejemplo: 1.0.3)
@@ -145,7 +158,7 @@ Tabla firmware_versions:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla sensor_configs:
+Tabla `sensor_configs`:
 
 - id (PK)
 - sensor_type (varchar: PM1, PM25, PM10)
@@ -156,7 +169,7 @@ Tabla sensor_configs:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla sensor_notes:
+Tabla `sensor_notes`:
 
 - id (PK)
 - device_id (FK → devices.id)
@@ -165,7 +178,7 @@ Tabla sensor_notes:
 - created_by_id (FK → users.id)
 - created_at (timestamp)
 
-Tabla readings:
+Tabla `readings`:
 
 - id (PK)
 - device_id (FK → devices.id)
@@ -177,7 +190,7 @@ Tabla readings:
 - risk_index (int, 0–100)
 - air_quality_percent (int, 0–100)
 
-Tabla alerts:
+Tabla `alerts`:
 
 - id (PK)
 - device_id (FK → devices.id)
@@ -189,7 +202,7 @@ Tabla alerts:
 - resolved_at (timestamp, nullable)
 - responsible_user_id (FK → users.id, nullable)
 
-Tabla incidents:
+Tabla `incidents`:
 
 - id (PK)
 - alert_id (FK → alerts.id)
@@ -199,7 +212,7 @@ Tabla incidents:
 - created_at (timestamp)
 - updated_at (timestamp)
 
-Tabla usage_reports:
+Tabla `usage_reports`:
 
 - id (PK)
 - generated_at (timestamp)
@@ -215,19 +228,19 @@ Tabla usage_reports:
 
 Casos de uso principales:
 
-- RegisterUserUseCase
-- LoginUseCase
-- LockUserAccountUseCase / UnlockUserAccountUseCase
-- ListUsersUseCase
-- UpdateUserUseCase
-- ChangeUserStatusUseCase
-- ListPlansUseCase
-- ListPlanFeaturesUseCase
-- ListAccessLogsUseCase
-- ListSystemLogsUseCase
-- UpdateConfigParameterUseCase (crea entrada en config_change_logs)
-- ListConfigChangeLogsUseCase
-- ListVersionHistoryUseCase
+- `RegisterUserUseCase`
+- `LoginUseCase`
+- `LockUserAccountUseCase` / `UnlockUserAccountUseCase`
+- `ListUsersUseCase`
+- `UpdateUserUseCase`
+- `ChangeUserStatusUseCase`
+- `ListPlansUseCase`
+- `ListPlanFeaturesUseCase`
+- `ListAccessLogsUseCase`
+- `ListSystemLogsUseCase`
+- `UpdateConfigParameterUseCase` (crea entrada en `config_change_logs`)
+- `ListConfigChangeLogsUseCase`
+- `ListVersionHistoryUseCase`
 
 Reglas de negocio clave:
 
@@ -236,31 +249,31 @@ Reglas de negocio clave:
   - Mínimo 8 caracteres.
   - Al menos una mayúscula, una minúscula y un dígito.
 - Intentos fallidos:
-  - Incrementar failed_login_count en login fallido.
-  - Si se supera un umbral (por ejemplo 5), setear locked_until unos minutos en el futuro.
-  - Este umbral y tiempo se pueden parametrizar via config_parameters.
+  - Incrementar `failed_login_count` en login fallido.
+  - Si se supera un umbral (por ejemplo 5), setear `locked_until` unos minutos en el futuro.
+  - Este umbral y tiempo se pueden parametrizar vía `config_parameters`.
 
 ### 3.2 device-service
 
 Casos de uso principales:
 
-- IngestReadingUseCase
-- ListReadingsByDeviceAndRangeUseCase
-- ListAlertsUseCase
-- UpdateAlertStatusUseCase
-- CreateIncidentUseCase
-- UpdateIncidentUseCase
-- ListDevicesUseCase
-- CreateDeviceUseCase
-- UpdateDeviceUseCase
-- AssignDeviceToUserUseCase
-- ListSensorConfigsUseCase
-- UpdateSensorConfigUseCase
-- GenerateUsageReportUseCase
+- `IngestReadingUseCase`
+- `ListReadingsByDeviceAndRangeUseCase`
+- `ListAlertsUseCase`
+- `UpdateAlertStatusUseCase`
+- `CreateIncidentUseCase`
+- `UpdateIncidentUseCase`
+- `ListDevicesUseCase`
+- `CreateDeviceUseCase`
+- `UpdateDeviceUseCase`
+- `AssignDeviceToUserUseCase`
+- `ListSensorConfigsUseCase`
+- `UpdateSensorConfigUseCase`
+- `GenerateUsageReportUseCase`
 
-Lógica detallada de IngestReadingUseCase:
+Lógica detallada de `IngestReadingUseCase`:
 
-1) Entrada:
+1) Entrada (payload JSON típico):
 
 ```json
 {
@@ -272,110 +285,178 @@ Lógica detallada de IngestReadingUseCase:
   "timestamp": "2025-11-29T09:30:00Z"
 }
 
-```markdown
 2) Validar:
 
-- device_uid:
-  - Buscar Device por `device_uid`.
-  - Si no existe:
-    - Rechazar la operación con error HTTP 400 o 404 (según se defina).
-    - Registrar en `system_logs` un ERROR con:
-      - type = ERROR
-      - source = "device-service"
-      - message = "Intento de lectura desde dispositivo desconocido: <device_uid>".
+device_uid:
 
-- Valores de PM:
-  - Para cada `pm1`, `pm25`, `pm10`:
-    - Si es `null`, se puede guardar como `null` (el sensor podría fallar temporalmente).
-    - Si el valor < 0 → reemplazar por 0.
-    - Si el valor > 2000 → reemplazar por 2000 y registrar WARNING en `system_logs` indicando que se recortó un valor extremo.
+Buscar Device por device_uid.
 
-- battery_level:
-  - Si viene informado:
-    - Si < 0 → poner 0.
-    - Si > 100 → poner 100.
-  - Si no viene informado → dejar `null` en la lectura.
+Si no existe:
 
-3) Calcular `risk_index`:
+Rechazar la operación con error HTTP 400 o 404 (según se defina).
 
-- PM base: usar siempre `pm25` como indicador principal.
-- Obtener configuración de thresholds desde `sensor_configs` para `sensor_type = "PM25"`:
-  - `recommended_max`
-  - `critical_threshold`
-- Si existe configuración:
-  - Regla por tramos (ejemplo razonable):
-    - Si `pm25 <= recommended_max`:
-      - `risk_index` en el rango 0–25 (puede ser proporcional, por ejemplo mapeo lineal).
-    - Si `recommended_max < pm25 < critical_threshold`:
-      - `risk_index` en el rango 26–70 (mapeo lineal en ese tramo).
-    - Si `pm25 >= critical_threshold`:
-      - `risk_index` en el rango 71–100 (mapeo lineal en ese tramo).
-- Si NO existe configuración para PM25:
-  - Usar rangos fijos del dispositivo (fallback):
-    - 0–35   → BAJO   → `risk_index` en 0–25.
-    - 35–75  → MEDIO  → `risk_index` en 26–70.
-    - 75–150 → ALTO   → `risk_index` en 71–90.
-    - >150   → MUY ALTO → `risk_index` en 91–100.
-  - Dejar un TODO indicando que se debe parametrizar vía `sensor_configs`.
+Registrar en system_logs un ERROR con:
 
-4) Calcular `air_quality_percent`:
+type = ERROR
 
-- Fórmula base:
-  - `air_quality_percent = 100 - risk_index`
-- Asegurar límites:
-  - Si < 0 → poner 0.
-  - Si > 100 → poner 100.
+source = "device-service"
 
-5) Guardar `reading`:
+message = "Intento de lectura desde dispositivo desconocido: <device_uid>".
 
-- Crear un registro en la tabla `readings` con:
-  - `device_id` (FK al dispositivo encontrado).
-  - `recorded_at` = timestamp actual del servidor (no el del payload).
-  - `pm1`, `pm25`, `pm10` (ya normalizados).
-  - `battery_level` (ya normalizado o `null`).
-  - `risk_index`.
-  - `air_quality_percent`.
+Valores de PM:
 
-6) Actualizar `device`:
+Para cada pm1, pm25, pm10:
 
-- `last_communication_at` = timestamp actual del servidor.
-- `last_battery_level` = `battery_level` de la lectura si no es `null`.
-- `status`:
-  - Derivado del `risk_index` de la nueva lectura:
-    - Tramo seguro   → `ACTIVE`.
-    - Tramo medio    → `WARNING`.
-    - Tramo alto/crítico → `CRITICAL`.
-- OFFLINE:
-  - No se calcula aquí.
-  - Un job (tarea programada) marcará `OFFLINE` si `now() - last_communication_at` supera un umbral definido en `config_parameters` (por ejemplo `DEVICE_OFFLINE_MINUTES`).  
-  - Dejar un TODO indicando que esta lógica se implementa en un proceso separado.
+Si es null, se puede guardar como null (el sensor podría fallar temporalmente).
 
-7) Generar alerta (si aplica):
+Si el valor < 0 → reemplazar por 0.
 
-- Usar `pm25` y thresholds de `sensor_configs` (o los rangos de fallback).
-- Regla:
-  - Si `pm25 > critical_threshold`:
-    - Crear `Alert` con:
-      - severity = `CRITICAL`
-      - status = `PENDING`
-  - Si `pm25` entre `recommended_max` y `critical_threshold`:
-    - Crear `Alert` con:
-      - severity = `HIGH` (o `MEDIUM`, pero la regla debe quedar documentada).
-  - Si `pm25 <= recommended_max`:
-    - No crear alerta nueva.
-- En todos los casos donde se crea alerta:
-  - Vincular:
-    - `device_id`
-    - `reading_id`
-  - `message`:
-    - Texto tipo: `"PM2.5 en X µg/m³ supera umbral Y"`.
+Si el valor > 2000 → reemplazar por 2000 y registrar WARNING en system_logs indicando que se recortó un valor extremo.
 
-8) Respuesta HTTP esperada (a través de la capa web):
+battery_level:
 
-- Código: `201 Created`.
-- Body (ejemplo):
+Si viene informado:
 
-```json
+Si < 0 → poner 0.
+
+Si > 100 → poner 100.
+
+Si no viene informado → dejar null en la lectura.
+
+Calcular risk_index:
+
+PM base: usar siempre pm25 como indicador principal.
+
+Obtener configuración de thresholds desde sensor_configs para sensor_type = "PM25":
+
+recommended_max
+
+critical_threshold
+
+Si existe configuración:
+
+Regla por tramos (ejemplo razonable):
+
+Si pm25 <= recommended_max:
+
+risk_index en el rango 0–25 (puede ser proporcional, por ejemplo mapeo lineal).
+
+Si recommended_max < pm25 < critical_threshold:
+
+risk_index en el rango 26–70 (mapeo lineal en ese tramo).
+
+Si pm25 >= critical_threshold:
+
+risk_index en el rango 71–100 (mapeo lineal en ese tramo).
+
+Si NO existe configuración para PM25:
+
+Usar rangos fijos del dispositivo (fallback):
+
+0–35 → BAJO → risk_index en 0–25.
+
+35–75 → MEDIO → risk_index en 26–70.
+
+75–150 → ALTO → risk_index en 71–90.
+
+150 → MUY ALTO → risk_index en 91–100.
+
+Dejar un TODO indicando que se debe parametrizar vía sensor_configs.
+
+Calcular air_quality_percent:
+
+Fórmula base:
+
+air_quality_percent = 100 - risk_index
+
+Asegurar límites:
+
+Si < 0 → poner 0.
+
+Si > 100 → poner 100.
+
+Guardar reading:
+
+Crear un registro en la tabla readings con:
+
+device_id (FK al dispositivo encontrado).
+
+recorded_at = timestamp actual del servidor (no el del payload).
+
+pm1, pm25, pm10 (ya normalizados).
+
+battery_level (ya normalizado o null).
+
+risk_index.
+
+air_quality_percent.
+
+Actualizar device:
+
+last_communication_at = timestamp actual del servidor.
+
+last_battery_level = battery_level de la lectura si no es null.
+
+status:
+
+Derivado del risk_index de la nueva lectura:
+
+Tramo seguro → ACTIVE.
+
+Tramo medio → WARNING.
+
+Tramo alto/crítico → CRITICAL.
+
+OFFLINE:
+
+No se calcula en este caso de uso.
+
+Un job (tarea programada) marcará OFFLINE si now() - last_communication_at supera un umbral definido en config_parameters (por ejemplo DEVICE_OFFLINE_MINUTES).
+
+Dejar un TODO indicando que esta lógica se implementa en un proceso separado.
+
+Generar alerta (si aplica):
+
+Usar pm25 y thresholds de sensor_configs (o los rangos de fallback).
+
+Regla:
+
+Si pm25 > critical_threshold:
+
+Crear Alert con:
+
+severity = CRITICAL
+
+status = PENDING.
+
+Si pm25 entre recommended_max y critical_threshold:
+
+Crear Alert con:
+
+severity = HIGH (o MEDIUM, pero la regla elegida debe quedar documentada en el código).
+
+Si pm25 <= recommended_max:
+
+No crear alerta nueva.
+
+En todos los casos donde se crea alerta:
+
+Vincular:
+
+device_id
+
+reading_id
+
+message:
+
+Texto tipo: "PM2.5 en X µg/m³ supera umbral Y".
+
+Respuesta HTTP esperada (a través de la capa web):
+
+Código: 201 Created.
+
+Body (ejemplo):
+
 {
   "reading_id": 12345,
   "device_id": 10,
@@ -385,6 +466,70 @@ Lógica detallada de IngestReadingUseCase:
   "created_alert": {
     "id": 777,
     "severity": "HIGH",
-    "status": "PENDING"
+    "status": "PENDING",
   }
 }
+
+3.3 notification-service (versión actual)
+
+Objetivo:
+
+Servir como base futura para notificaciones internas y push (por ejemplo hacia la app móvil vía FCM).
+
+Alcance en esta versión:
+
+Definir únicamente:
+
+Modelos de dominio simples: Notification, NotificationRule, NotificationChannel.
+
+Interfaces de repositorio.
+
+Casos de uso esqueléticos (por ejemplo SendNotificationUseCase) sin lógica avanzada.
+
+NO implementar integración real con FCM, correo electrónico ni colas de mensajes.
+
+NO exponer endpoints públicos más allá de, opcionalmente, un endpoint de prueba (ej. /notifications/test) que permita verificar que el servicio arranca.
+
+Regla para Codex:
+
+Cualquier integración externa (FCM, email, etc.) debe dejarse como TODO comentado y NO implementarse en esta fase.
+
+3.4 api-gateway (visión general)
+
+Responsabilidades:
+
+Ser la única entrada pública /api/**.
+
+Validar JWT en casi todas las rutas excepto login/registro.
+
+Delegar peticiones a user-service y device-service vía REST interno.
+
+Rechazar rutas inválidas.
+
+Puntos clave:
+
+Permitir sin autenticación:
+
+POST /api/login
+
+POST /api/register (si se habilita registro)
+
+(Opcional) /actuator/health
+
+Requerir JWT válido en el resto de rutas /api/**.
+
+Implementar un filtro de JWT:
+
+Leer Authorization: Bearer <token>.
+
+Validar firma, expiración y claims.
+
+Extraer user_id, role, plan_id y colocarlos en el contexto de seguridad.
+
+Rutas típicas:
+
+/api/login → delega a login de user-service.
+
+/api/users/** → delega a user-service.
+
+/api/devices/**, /api/readings/**, /api/alerts/** → delega a device-service.
