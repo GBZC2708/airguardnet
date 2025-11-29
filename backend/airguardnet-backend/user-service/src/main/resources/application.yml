@@ -1,17 +1,26 @@
+server:
+  port: 8081
+
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/airguardnet
-    username: postgres
-    password: root
-  jpa:
-    hibernate:
-      ddl-auto: none   # luego usaremos migraciones o generaremos schema, por ahora none/validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
   application:
     name: user-service
 
-logging:
-  level:
-    org.springframework: INFO
+  datasource:
+    url: jdbc:postgresql://localhost:5432/airguardnet
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false
+
+security:
+  jwt:
+    secret: "changeitsecret12345678901234567890"
+    expiration-ms: 3600000
