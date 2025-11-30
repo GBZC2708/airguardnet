@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const storedToken = localStorage.getItem('airguardnet_token')
@@ -27,10 +27,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(storedToken)
       try {
         setUser(JSON.parse(storedUser))
-      } catch (err) {
+      } catch {
         localStorage.removeItem('airguardnet_user')
       }
     }
+    setLoading(false)
   }, [])
 
   const login = async (credentials: LoginPayload) => {
@@ -54,6 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('airguardnet_token', response.data.token)
       localStorage.setItem('airguardnet_user', JSON.stringify(loggedUser))
       navigate('/dashboard')
+    } catch (err) {
+      setUser(null)
+      setToken(null)
+      localStorage.removeItem('airguardnet_token')
+      localStorage.removeItem('airguardnet_user')
+      const message = err instanceof Error ? err.message : 'Error al iniciar sesión'
+      throw new Error(message)
     } finally {
       setLoading(false)
     }
