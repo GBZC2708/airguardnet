@@ -1,14 +1,21 @@
 import httpClient from './httpClient'
-import { Device } from '../types/device'
+import type { ApiResponse, Alert, Device, Reading } from '../types'
 
 export const deviceApi = {
-  list: async () => {
-    const { data } = await httpClient.get('/devices')
-    return data as Device[]
+  getDevices: async () => {
+    const { data } = await httpClient.get<ApiResponse<Device[]>>('/devices')
+    return data.data
   },
-
-  detail: async (id: number) => {
-    const { data } = await httpClient.get(`/devices/${id}`)
-    return data as Device
+  getDeviceById: async (id: number) => {
+    const { data } = await httpClient.get<ApiResponse<Device>>(`/devices/${id}`)
+    return data.data
+  },
+  getDeviceReadings: async (id: number, params?: Record<string, string | number>) => {
+    const { data } = await httpClient.get<ApiResponse<Reading[]>>(`/devices/${id}/readings`, { params })
+    return data.data
+  },
+  getDeviceAlerts: async (id: number, params?: Record<string, string | number>) => {
+    const { data } = await httpClient.get<ApiResponse<Alert[]>>(`/devices/${id}/alerts`, { params })
+    return data.data
   }
 }
