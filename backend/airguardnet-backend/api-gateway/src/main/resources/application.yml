@@ -7,7 +7,6 @@ spring:
 
   cloud:
     gateway:
-      # CORS GLOBAL para permitir llamadas desde el frontend Vite (http://localhost:5173)
       globalcors:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
@@ -26,6 +25,39 @@ spring:
             exposedHeaders:
               - "*"
             allowCredentials: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        - id: login-route
+          uri: ${airguardnet.services.user.base-url}
+          predicates:
+            - Path=/api/login
+          filters:
+            - SetPath=/auth/login
+        - id: register-route
+          uri: ${airguardnet.services.user.base-url}
+          predicates:
+            - Path=/api/register
+          filters:
+            - SetPath=/auth/register
+        - id: user-service
+          uri: ${airguardnet.services.user.base-url}
+          predicates:
+            - Path=/api/users/**,/api/access-logs/**,/api/system-logs/**,/api/config-parameters/**,/api/config-change-logs/**,/api/version-history/**,/api/plans/**
+          filters:
+            - StripPrefix=1
+        - id: device-service
+          uri: ${airguardnet.services.device.base-url}
+          predicates:
+            - Path=/api/devices/**,/api/readings/**,/api/alerts/**,/api/usage-reports/**,/api/sensor-configs/**
+          filters:
+            - StripPrefix=1
+        - id: notification-service
+          uri: ${airguardnet.services.notification.base-url}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
 
 airguardnet:
   services:
