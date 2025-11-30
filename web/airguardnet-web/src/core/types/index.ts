@@ -1,7 +1,7 @@
 export interface ApiResponse<T> {
   success: boolean
   message: string | null
-  data: T
+  data: T | null
 }
 
 export type UserRole = 'ADMIN' | 'SUPERVISOR' | 'TECNICO' | 'OPERADOR'
@@ -97,7 +97,7 @@ export interface UsageReport {
   totalDevices: number
   totalReadings: number
   totalAlerts: number
-  datosResumen: string
+  datosResumen: string | null
 }
 
 export interface AccessLog {
