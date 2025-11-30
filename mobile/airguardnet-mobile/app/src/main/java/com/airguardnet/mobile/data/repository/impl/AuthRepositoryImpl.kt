@@ -1,0 +1,34 @@
+package com.airguardnet.mobile.data.repository.impl
+
+import com.airguardnet.mobile.data.local.dao.UserSessionDao
+import com.airguardnet.mobile.data.mapper.toDomain
+import com.airguardnet.mobile.data.mapper.toEntity
+import com.airguardnet.mobile.data.remote.AirGuardNetApiService
+import com.airguardnet.mobile.data.remote.dto.AuthRequestDto
+import com.airguardnet.mobile.domain.model.UserSession
+import com.airguardnet.mobile.domain.repository.AuthRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+class AuthRepositoryImpl(
+    private val api: AirGuardNetApiService,
+    private val userSessionDao: UserSessionDao
+) : AuthRepository {
+    override val session: Flow<UserSession?> = userSessionDao.observeSession().map { it?.toDomain() }
+
+    override suspend fun login(email: String, password: String): Result<UserSession> = try {
+        val response = api.login(AuthRequestDto(email, password))
+        if (response.success && response.data != null) {
+            val entity = response.data.toEntity()
+            userSessionDao.clear()
+            userSessionDao.insert(entity)
+            Result.success(entity.toDomain())
+        } else Result.failure(IllegalStateException(response.message ?: "Error"))
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    override suspend fun logout() {
+        userSessionDao.clear()
+    }
+}
