@@ -1,9 +1,9 @@
 import httpClient from './httpClient'
-import { DailyReport } from '../types/report'
+import type { ApiResponse, UsageReport } from '../types'
 
 export const reportApi = {
-  daily: async () => {
-    const { data } = await httpClient.get('/reports/daily')
-    return data as DailyReport[]
+  getUsageReports: async () => {
+    const { data } = await httpClient.get<ApiResponse<UsageReport[]>>('/usage-reports')
+    return data.data
   }
 }
