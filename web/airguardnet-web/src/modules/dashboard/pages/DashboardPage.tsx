@@ -23,7 +23,7 @@ export const DashboardPage = () => {
           alertApi.getAlerts({ limit: 50 }),
           deviceApi.getDevices(),
         ])
-        setReport(reportsRes?.[0] || null)
+        setReport(reportsRes?.[reportsRes.length - 1] || null)
         setAlerts(alertsRes || [])
         setDevices(devicesRes || [])
       } catch (err) {
@@ -52,10 +52,25 @@ export const DashboardPage = () => {
   }, [devices])
 
   const cards = [
-    { title: 'Dispositivos', value: report?.totalDevices ?? devices.length ?? 0, helper: 'Monitoreo activo', color: 'primary' as const },
-    { title: 'Lecturas', value: report?.totalReadings ?? '--', helper: 'Datos recientes', color: 'secondary' as const },
-    { title: 'Alertas críticas', value: criticalAlerts.length, helper: 'Revisar de inmediato', color: 'error' as const },
-    { title: 'Calidad de aire', value: `${100 - riskIndex}%`, helper: 'Promedio estimado', color: 'success' as const },
+    {
+      title: 'Usuarios',
+      value: report?.totalUsers ?? 0,
+      helper: report ? 'Último corte de uso' : 'Sin datos suficientes',
+      color: (report ? 'primary' : 'warning') as 'primary' | 'warning'
+    },
+    {
+      title: 'Dispositivos',
+      value: report?.totalDevices ?? devices.length ?? 0,
+      helper: report ? 'Monitoreo activo' : 'Sin datos suficientes',
+      color: (report ? 'primary' : 'warning') as 'primary' | 'warning'
+    },
+    {
+      title: 'Lecturas',
+      value: report?.totalReadings ?? 0,
+      helper: report ? 'Datos recientes' : 'Sin datos suficientes',
+      color: (report ? 'secondary' : 'warning') as 'secondary' | 'warning'
+    },
+    { title: 'Alertas críticas', value: report?.totalAlerts ?? criticalAlerts.length, helper: 'Revisar de inmediato', color: 'error' as const },
   ]
 
   const alertDistribution = [

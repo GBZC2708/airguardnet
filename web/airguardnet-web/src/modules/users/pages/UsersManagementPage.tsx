@@ -35,16 +35,6 @@ export const UsersManagementPage = () => {
     [plans]
   )
 
-  const handleStatusChange = async (userId: number, currentStatus: User['status']) => {
-    try {
-      const updated = await userApi.updateUserStatus(userId, currentStatus === 'ACTIVE' ? 'DISABLED' : 'ACTIVE')
-      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, status: updated.status } : user)))
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo actualizar el estado'
-      setError(message)
-    }
-  }
-
   const handleUserCreated = (user: User) => {
     setUsers((prev) => [user, ...prev])
     setOpen(false)
@@ -63,7 +53,7 @@ export const UsersManagementPage = () => {
         </Button>
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
-      <UsersTable users={users} planById={planById} onStatusChange={handleStatusChange} />
+      <UsersTable users={users} planById={planById} />
       <UserFormDialog open={open} onClose={() => setOpen(false)} plans={plans} onUserCreated={handleUserCreated} />
     </Stack>
   )
