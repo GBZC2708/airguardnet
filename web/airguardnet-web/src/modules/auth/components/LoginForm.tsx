@@ -50,7 +50,7 @@ export const LoginForm = () => {
         onChange={(e) => setEmail(e.target.value)}
         required
         error={!!emailError}
-        helperText={emailError || ' '}
+        helperText={emailError || 'Usa tu correo corporativo para recibir notificaciones.'}
       />
       <TextField
         label="Contraseña"
@@ -61,7 +61,7 @@ export const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
         error={!!passwordError}
-        helperText={passwordError || ' '}
+        helperText={passwordError || 'Usa al menos 8 caracteres combinando números, mayúsculas y símbolos.'}
       />
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <FormControlLabel control={<Checkbox />} label="Recordarme" />
@@ -70,7 +70,17 @@ export const LoginForm = () => {
         </Link>
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
-      <Button type="submit" variant="contained" size="large" disabled={loading || isInvalid}>
+      <Button
+        type="submit"
+        variant="contained"
+        size="large"
+        disabled={loading || isInvalid}
+        sx={{
+          transition: 'transform 160ms ease, box-shadow 160ms ease',
+          '&:hover': { transform: 'translateY(-1px)', boxShadow: 6 },
+          '&:active': { transform: 'translateY(0)' },
+        }}
+      >
         {loading ? 'Ingresando...' : 'Iniciar Sesión'}
       </Button>
       <Typography variant="body2" color="text.secondary">
