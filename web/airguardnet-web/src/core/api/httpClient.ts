@@ -14,7 +14,14 @@ httpClient.interceptors.request.use((config) => {
 })
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const apiResponse = response.data as Partial<ApiResponse<unknown>>
+    if (apiResponse && typeof apiResponse.success === 'boolean' && !apiResponse.success) {
+      const message = apiResponse.message ?? 'Error desconocido'
+      return Promise.reject(new Error(message))
+    }
+    return response
+  },
   (error) => {
     if (error.response) {
       if (error.response.status === 401) {
@@ -22,10 +29,14 @@ httpClient.interceptors.response.use(
         localStorage.removeItem('airguardnet_user')
         window.location.href = '/login'
       }
-      const apiResponse = error.response.data as ApiResponse<unknown>
+      const apiResponse = error.response.data as Partial<ApiResponse<unknown>>
       if (apiResponse && apiResponse.message) {
         return Promise.reject(new Error(apiResponse.message))
       }
+      return Promise.reject(new Error('Ocurrió un error al procesar la solicitud.'))
+    }
+    if (error.request) {
+      return Promise.reject(new Error('No se pudo conectar con el servidor. Verifica tu conexión.'))
     }
     return Promise.reject(error)
   }

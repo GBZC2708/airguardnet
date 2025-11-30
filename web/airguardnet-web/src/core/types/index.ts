@@ -1,7 +1,7 @@
 export interface ApiResponse<T> {
   success: boolean
   message: string | null
-  data: T | null
+  data: T
 }
 
 export type UserRole = 'ADMIN' | 'SUPERVISOR' | 'TECNICO' | 'OPERADOR'

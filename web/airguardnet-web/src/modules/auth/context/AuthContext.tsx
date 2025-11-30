@@ -38,21 +38,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true)
     try {
       const response = await authApi.login(credentials)
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Error al iniciar sesión')
-      }
       const loggedUser: User = {
-        id: response.data.userId,
-        name: response.data.name,
+        id: response.userId,
+        name: response.name,
         lastName: '',
-        email: response.data.email,
-        role: response.data.role,
-        planId: response.data.planId,
+        email: response.email,
+        role: response.role,
+        planId: response.planId,
         status: 'ACTIVE'
       }
       setUser(loggedUser)
-      setToken(response.data.token)
-      localStorage.setItem('airguardnet_token', response.data.token)
+      setToken(response.token)
+      localStorage.setItem('airguardnet_token', response.token)
       localStorage.setItem('airguardnet_user', JSON.stringify(loggedUser))
       navigate('/dashboard')
     } catch (err) {

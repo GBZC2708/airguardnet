@@ -16,13 +16,13 @@ interface LoginData {
 }
 
 export const authApi = {
-  login: async (payload: LoginPayload) => {
+  login: async (payload: LoginPayload): Promise<LoginData> => {
     const { data } = await httpClient.post<ApiResponse<LoginData>>('/login', payload)
-    return data
+    return data.data
   },
-  register: async (payload: Partial<User>) => {
+  register: async (payload: Partial<User>): Promise<User> => {
     const { data } = await httpClient.post<ApiResponse<User>>('/register', payload)
-    return data
+    return data.data
   }
 }
 
