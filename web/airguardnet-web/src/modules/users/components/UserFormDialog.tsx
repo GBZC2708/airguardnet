@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert, MenuItem, Stack } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert, MenuItem, Stack, CircularProgress } from '@mui/material'
 import type { Plan, User, UserRole } from '../../../core/types'
 import { authApi, type RegisterPayload } from '../../../core/api/authApi'
 
@@ -36,14 +36,19 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
 
   const validate = useMemo(() => (payload: RegisterPayload) => {
     const fieldErrors: Partial<Record<keyof RegisterPayload, string>> = {}
-    if (!payload.name.trim()) fieldErrors.name = 'El nombre es obligatorio'
-    if (!payload.lastName.trim()) fieldErrors.lastName = 'El apellido es obligatorio'
-    const emailRegex = /.+@.+\..+/
-    if (!payload.email.trim()) fieldErrors.email = 'El correo es obligatorio'
-    else if (!emailRegex.test(payload.email)) fieldErrors.email = 'Correo inválido'
-    if (!payload.password.trim()) fieldErrors.password = 'La contraseña es obligatoria'
-    else if (payload.password.length < 8) fieldErrors.password = 'Mínimo 8 caracteres'
-    if (!payload.planId) fieldErrors.planId = 'Selecciona un plan'
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
+    if (!payload.name.trim()) fieldErrors.name = 'El nombre es obligatorio.'
+    if (!payload.lastName.trim()) fieldErrors.lastName = 'El apellido es obligatorio.'
+    if (!payload.email.trim()) fieldErrors.email = 'El correo es obligatorio.'
+    else if (!emailRegex.test(payload.email)) fieldErrors.email = 'Ingresa un correo electrónico válido.'
+    if (!payload.role) fieldErrors.role = 'Selecciona un rol.'
+    if (!payload.planId) fieldErrors.planId = 'Selecciona un plan.'
+    if (!payload.password.trim()) fieldErrors.password = 'La contraseña es obligatoria.'
+    else if (!passwordRegex.test(payload.password)) {
+      fieldErrors.password = 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.'
+    }
     return fieldErrors
   }, [])
 
@@ -64,7 +69,10 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
       setForm({ name: '', lastName: '', email: '', role: 'OPERADOR', planId: plans[0]?.id ?? 1, password: '' })
       onClose()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo crear el usuario'
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Ocurrió un error al crear el usuario. Verifica los datos e intenta nuevamente.'
       setSubmitError(message)
     } finally {
       setSubmitting(false)
@@ -98,15 +106,15 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             required
           />
         </Stack>
-        <TextField
-          label="Correo"
-          fullWidth
-          value={form.email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          error={!!errors.email}
-          helperText={errors.email || ' '}
-          required
-        />
+          <TextField
+            label="Correo"
+            fullWidth
+            value={form.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email || ' '}
+            required
+          />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             label="Rol"
@@ -114,6 +122,8 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             fullWidth
             value={form.role}
             onChange={(e) => handleChange('role', e.target.value as UserRole)}
+            error={!!errors.role}
+            helperText={errors.role || ' '}
             required
           >
             {roles.map((role) => (
@@ -146,13 +156,18 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
           value={form.password}
           onChange={(e) => handleChange('password', e.target.value)}
           error={!!errors.password}
-          helperText={errors.password || ' '}
+          helperText={errors.password || 'Min. 8 caracteres, incluye mayúsculas, minúsculas y números.'}
           required
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cerrar</Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={submitting || isInvalid}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={submitting || isInvalid}
+          startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : undefined}
+        >
           {submitting ? 'Guardando...' : 'Guardar'}
         </Button>
       </DialogActions>
