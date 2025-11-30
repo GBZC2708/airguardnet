@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Alert, MenuItem, Stack } from '@mui/material'
 import type { Plan, User, UserRole } from '../../../core/types'
-import { userApi, type CreateUserPayload } from '../../../core/api/userApi'
+import { authApi, type RegisterPayload } from '../../../core/api/authApi'
 
 interface Props {
   open: boolean
@@ -13,42 +13,41 @@ interface Props {
 const roles: UserRole[] = ['ADMIN', 'SUPERVISOR', 'TECNICO', 'OPERADOR']
 
 export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) => {
-  const [form, setForm] = useState<CreateUserPayload>({
+  const [form, setForm] = useState<RegisterPayload>({
     name: '',
     lastName: '',
     email: '',
     role: 'OPERADOR',
-    planId: plans[0]?.id ?? 0,
+    planId: plans[0]?.id ?? 1,
     password: ''
   })
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<keyof RegisterPayload, string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (plans.length && form.planId === 0) {
-      setForm((prev) => ({ ...prev, planId: plans[0].id }))
+    if (plans.length) {
+      setForm((prev) => ({
+        ...prev,
+        planId: plans.some((p) => p.id === prev.planId) ? prev.planId : plans[0].id
+      }))
     }
-  }, [plans, form.planId])
+  }, [plans])
 
-  const validate = useMemo(
-    () =>
-      (payload: CreateUserPayload) => {
-        const fieldErrors: Partial<Record<keyof CreateUserPayload, string>> = {}
-        if (!payload.name.trim()) fieldErrors.name = 'El nombre es obligatorio'
-        if (!payload.lastName.trim()) fieldErrors.lastName = 'El apellido es obligatorio'
-        const emailRegex = /.+@.+\..+/
-        if (!payload.email.trim()) fieldErrors.email = 'El correo es obligatorio'
-        else if (!emailRegex.test(payload.email)) fieldErrors.email = 'Correo inválido'
-        if (!payload.password.trim()) fieldErrors.password = 'La contraseña es obligatoria'
-        else if (payload.password.length < 8) fieldErrors.password = 'Mínimo 8 caracteres'
-        if (!payload.planId) fieldErrors.planId = 'Selecciona un plan'
-        return fieldErrors
-      },
-    []
-  )
+  const validate = useMemo(() => (payload: RegisterPayload) => {
+    const fieldErrors: Partial<Record<keyof RegisterPayload, string>> = {}
+    if (!payload.name.trim()) fieldErrors.name = 'El nombre es obligatorio'
+    if (!payload.lastName.trim()) fieldErrors.lastName = 'El apellido es obligatorio'
+    const emailRegex = /.+@.+\..+/
+    if (!payload.email.trim()) fieldErrors.email = 'El correo es obligatorio'
+    else if (!emailRegex.test(payload.email)) fieldErrors.email = 'Correo inválido'
+    if (!payload.password.trim()) fieldErrors.password = 'La contraseña es obligatoria'
+    else if (payload.password.length < 8) fieldErrors.password = 'Mínimo 8 caracteres'
+    if (!payload.planId) fieldErrors.planId = 'Selecciona un plan'
+    return fieldErrors
+  }, [])
 
-  const handleChange = <K extends keyof CreateUserPayload>(field: K, value: CreateUserPayload[K]) => {
+  const handleChange = <K extends keyof RegisterPayload>(field: K, value: RegisterPayload[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     setErrors((prev) => ({ ...prev, [field]: undefined }))
   }
@@ -60,9 +59,10 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const created = await userApi.createUser(form)
+      const created = await authApi.register(form)
       onUserCreated(created)
-      setForm({ name: '', lastName: '', email: '', role: 'OPERADOR', planId: plans[0]?.id ?? 0, password: '' })
+      setForm({ name: '', lastName: '', email: '', role: 'OPERADOR', planId: plans[0]?.id ?? 1, password: '' })
+      onClose()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo crear el usuario'
       setSubmitError(message)
@@ -86,6 +86,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             onChange={(e) => handleChange('name', e.target.value)}
             error={!!errors.name}
             helperText={errors.name || ' '}
+            required
           />
           <TextField
             label="Apellido"
@@ -94,6 +95,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             onChange={(e) => handleChange('lastName', e.target.value)}
             error={!!errors.lastName}
             helperText={errors.lastName || ' '}
+            required
           />
         </Stack>
         <TextField
@@ -103,6 +105,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
           onChange={(e) => handleChange('email', e.target.value)}
           error={!!errors.email}
           helperText={errors.email || ' '}
+          required
         />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
@@ -111,6 +114,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             fullWidth
             value={form.role}
             onChange={(e) => handleChange('role', e.target.value as UserRole)}
+            required
           >
             {roles.map((role) => (
               <MenuItem key={role} value={role}>
@@ -126,6 +130,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
             onChange={(e) => handleChange('planId', Number(e.target.value))}
             error={!!errors.planId}
             helperText={errors.planId || ' '}
+            required
           >
             {plans.map((plan) => (
               <MenuItem key={plan.id} value={plan.id}>
@@ -142,6 +147,7 @@ export const UserFormDialog = ({ open, onClose, plans, onUserCreated }: Props) =
           onChange={(e) => handleChange('password', e.target.value)}
           error={!!errors.password}
           helperText={errors.password || ' '}
+          required
         />
       </DialogContent>
       <DialogActions>

@@ -1,13 +1,12 @@
-import { Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, Typography, Stack } from '@mui/material'
+import { Table, TableBody, TableCell, TableHead, TableRow, Chip, Button, Typography, Stack, Tooltip } from '@mui/material'
 import type { User } from '../../../core/types'
 
 interface Props {
   users: User[]
   planById: Record<number, string>
-  onStatusChange: (userId: number, currentStatus: User['status']) => void
 }
 
-export const UsersTable = ({ users, planById, onStatusChange }: Props) => (
+export const UsersTable = ({ users, planById }: Props) => (
   <Table size="small">
     <TableHead>
       <TableRow>
@@ -39,15 +38,19 @@ export const UsersTable = ({ users, planById, onStatusChange }: Props) => (
             </TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.role}</TableCell>
-            <TableCell>{planById[user.planId] || 'N/D'}</TableCell>
+            <TableCell>{user.planId ? planById[user.planId] || 'N/D' : 'N/D'}</TableCell>
             <TableCell>
               <Chip label={user.status === 'ACTIVE' ? 'Activo' : 'Deshabilitado'} color={user.status === 'ACTIVE' ? 'success' : 'default'} size="small" />
             </TableCell>
             <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'N/D'}</TableCell>
             <TableCell align="right">
-              <Button size="small" variant="outlined" onClick={() => onStatusChange(user.id, user.status)}>
-                {user.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
-              </Button>
+              <Tooltip title="Cambio de estado de usuario pendiente de implementación (requiere endpoint en backend)">
+                <span>
+                  <Button size="small" variant="outlined" disabled>
+                    {user.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                  </Button>
+                </span>
+              </Tooltip>
             </TableCell>
           </TableRow>
         ))

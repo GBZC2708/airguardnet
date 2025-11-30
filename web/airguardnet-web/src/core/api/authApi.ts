@@ -1,17 +1,17 @@
 import httpClient from './httpClient'
-import type { ApiResponse, User } from '../types'
+import type { ApiResponse, LoginData, User } from '../types'
 
 interface LoginPayload {
   email: string
   password: string
 }
 
-interface LoginData {
-  token: string
-  userId: number
+export interface RegisterPayload {
   name: string
+  lastName: string
   email: string
-  role: User['role']
+  password: string
+  role: 'ADMIN' | 'SUPERVISOR' | 'TECNICO' | 'OPERADOR'
   planId: number
 }
 
@@ -20,10 +20,10 @@ export const authApi = {
     const { data } = await httpClient.post<ApiResponse<LoginData>>('/login', payload)
     return data.data
   },
-  register: async (payload: Partial<User>): Promise<User> => {
+  register: async (payload: RegisterPayload): Promise<User> => {
     const { data } = await httpClient.post<ApiResponse<User>>('/register', payload)
     return data.data
   }
 }
 
-export type { LoginData, LoginPayload }
+export type { LoginPayload }

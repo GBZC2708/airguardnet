@@ -4,6 +4,15 @@ export interface ApiResponse<T> {
   data: T
 }
 
+export interface LoginData {
+  token: string
+  userId: number
+  name: string
+  email: string
+  role: 'ADMIN' | 'SUPERVISOR' | 'TECNICO' | 'OPERADOR'
+  planId: number
+}
+
 export type UserRole = 'ADMIN' | 'SUPERVISOR' | 'TECNICO' | 'OPERADOR'
 export type UserStatus = 'ACTIVE' | 'DISABLED'
 
@@ -13,9 +22,9 @@ export interface User {
   lastName: string
   email: string
   role: UserRole
-  planId: number
+  planId: number | null
   status: UserStatus
-  lastLoginAt?: string
+  lastLoginAt?: string | null
 }
 
 export interface Plan {
@@ -97,7 +106,7 @@ export interface UsageReport {
   totalDevices: number
   totalReadings: number
   totalAlerts: number
-  datosResumen: string | null
+  datosResumen?: any
 }
 
 export interface AccessLog {
