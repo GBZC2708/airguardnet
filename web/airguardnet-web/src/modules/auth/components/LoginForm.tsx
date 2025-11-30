@@ -10,14 +10,14 @@ export const LoginForm = () => {
   const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({ email: false, password: false })
 
   const emailError = useMemo(() => {
-    if (!email && touched.email) return 'El correo es obligatorio'
+    if (!email && touched.email) return 'Ingresa tu correo electrónico.'
     const emailRegex = /.+@.+\..+/
-    if (email && !emailRegex.test(email)) return 'Ingresa un correo válido'
+    if (email && !emailRegex.test(email)) return 'Ingresa un correo electrónico válido.'
     return ''
   }, [email, touched.email])
 
   const passwordError = useMemo(() => {
-    if (!password && touched.password) return 'La contraseña es obligatoria'
+    if (!password && touched.password) return 'Ingresa tu contraseña.'
     return ''
   }, [password, touched.password])
 
@@ -31,8 +31,12 @@ export const LoginForm = () => {
     try {
       await login({ email, password })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al iniciar sesión'
-      setError(message)
+      const defaultMessage =
+        'Correo o contraseña incorrectos. Si el problema persiste, verifica que tu contraseña cumpla la política de seguridad.'
+      const message = err instanceof Error ? err.message : defaultMessage
+      const normalized = message.toLowerCase()
+      const resolvedMessage = normalized.includes('conectar') || normalized.includes('servidor') ? message : defaultMessage
+      setError(resolvedMessage)
     }
   }
 
