@@ -43,7 +43,7 @@ spring:
         - id: user-service
           uri: ${airguardnet.services.user.base-url}
           predicates:
-            - Path=/api/users/**,/api/access-logs/**,/api/system-logs/**,/api/config-parameters/**,/api/config-change-logs/**,/api/version-history/**,/api/plans/**
+            - Path=/api/auth/**,/api/users/**,/api/access-logs/**,/api/system-logs/**,/api/config-parameters/**,/api/config-change-logs/**,/api/version-history/**,/api/plans/**
           filters:
             - StripPrefix=1
         - id: device-service
@@ -67,10 +67,6 @@ airguardnet:
       base-url: http://localhost:8082
     notification:
       base-url: http://localhost:8083
-
-jwt:
-  secret: "changeitsecret12345678901234567890"
-  expiration-ms: 3600000
 
 logging:
   level:
