@@ -45,7 +45,8 @@ const navItems = [
   { label: 'Usuarios', to: '/users', icon: <GroupIcon /> },
   { label: 'Configuración', to: '/config/system', icon: <SettingsIcon /> },
   { label: 'Documentación', to: '/docs', icon: <LibraryBooksIcon /> },
-  { label: 'Logs', to: '/logs/system', icon: <ListAltIcon /> },
+  { label: 'Logs de acceso', to: '/logs/access', icon: <ListAltIcon /> },
+  { label: 'Logs del sistema', to: '/logs/system', icon: <ListAltIcon /> },
   { label: 'Simulación', to: '/simulation', icon: <ScienceIcon /> },
 ]
 
@@ -189,7 +190,20 @@ export const MainLayout = () => {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box
+        key={location.pathname}
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          mt: 8,
+          animation: 'fadeSlide 260ms ease',
+          '@keyframes fadeSlide': {
+            from: { opacity: 0, transform: 'translateY(8px)' },
+            to: { opacity: 1, transform: 'translateY(0)' },
+          },
+        }}
+      >
         <Outlet />
       </Box>
 

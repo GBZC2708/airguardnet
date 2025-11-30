@@ -4,9 +4,10 @@ import type { User } from '../../../core/types'
 interface Props {
   users: User[]
   planById: Record<number, string>
+  isAdmin: boolean
 }
 
-export const UsersTable = ({ users, planById }: Props) => (
+export const UsersTable = ({ users, planById, isAdmin }: Props) => (
   <Table size="small">
     <TableHead>
       <TableRow>
@@ -44,13 +45,28 @@ export const UsersTable = ({ users, planById }: Props) => (
             </TableCell>
             <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'N/D'}</TableCell>
             <TableCell align="right">
-              <Tooltip title="Cambio de estado de usuario pendiente de implementación (requiere endpoint en backend)">
-                <span>
-                  <Button size="small" variant="outlined" disabled>
-                    {user.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
-                  </Button>
-                </span>
-              </Tooltip>
+              {isAdmin ? (
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Tooltip title="La actualización de estado no está disponible en la versión actual del backend">
+                    <span>
+                      <Button size="small" variant="outlined" disabled>
+                        {user.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Eliminar usuarios requiere soporte del backend. Desactiva al usuario mientras tanto.">
+                    <span>
+                      <Button size="small" color="error" variant="outlined" disabled>
+                        Eliminar
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Stack>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Acciones solo para ADMIN
+                </Typography>
+              )}
             </TableCell>
           </TableRow>
         ))

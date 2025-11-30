@@ -4,6 +4,7 @@ import type { Plan, User } from '../../../core/types'
 import { userApi } from '../../../core/api/userApi'
 import { UsersTable } from '../components/UsersTable'
 import { UserFormDialog } from '../components/UserFormDialog'
+import { useAuth } from '../../auth/hooks/useAuth'
 
 export const UsersManagementPage = () => {
   const [users, setUsers] = useState<User[]>([])
@@ -11,6 +12,8 @@ export const UsersManagementPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
     const load = async () => {
@@ -48,13 +51,26 @@ export const UsersManagementPage = () => {
         <Typography variant="h5" fontWeight={800}>
           Usuarios
         </Typography>
-        <Button variant="contained" onClick={() => setOpen(true)}>
-          Nuevo usuario
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="contained"
+            onClick={() => setOpen(true)}
+            sx={{ transition: 'transform 160ms ease', '&:hover': { transform: 'translateY(-1px)' } }}
+          >
+            Nuevo usuario
+          </Button>
+        )}
       </Stack>
       {error && <Alert severity="error">{error}</Alert>}
-      <UsersTable users={users} planById={planById} />
-      <UserFormDialog open={open} onClose={() => setOpen(false)} plans={plans} onUserCreated={handleUserCreated} />
+      {!isAdmin && (
+        <Alert severity="info">
+          Solo los administradores pueden crear, activar o eliminar usuarios. Puedes consultar la información en modo solo lectura.
+        </Alert>
+      )}
+      <UsersTable users={users} planById={planById} isAdmin={isAdmin} />
+      {isAdmin && (
+        <UserFormDialog open={open} onClose={() => setOpen(false)} plans={plans} onUserCreated={handleUserCreated} />
+      )}
     </Stack>
   )
 }

@@ -11,7 +11,13 @@ export const SummaryCards = ({ cards }: { cards: SummaryCardProps[] }) => {
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
       {cards.map((card) => (
-        <Card key={card.title}>
+        <Card
+          key={card.title}
+          sx={{
+            transition: 'transform 150ms ease, box-shadow 150ms ease',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: 6 },
+          }}
+        >
           <CardContent>
             <Stack spacing={1}>
               <Typography variant="body2" color="text.secondary">
