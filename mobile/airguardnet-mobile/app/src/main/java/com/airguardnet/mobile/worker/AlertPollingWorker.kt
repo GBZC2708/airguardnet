@@ -26,11 +26,15 @@ class AlertPollingWorker @AssistedInject constructor(
     private val observeSessionUseCase: ObserveSessionUseCase,
     private val preferencesManager: UserPreferencesManager
 ) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = runCatching {
         val prefs = preferencesManager.preferences.firstOrNull()
         if (prefs != null && !prefs.criticalNotificationsEnabled) return Result.success()
         val session = observeSessionUseCase().first() ?: return Result.success()
-        val devices = deviceRepository.observeDevices().first()
+        var devices = deviceRepository.observeDevices().first()
+        if (devices.isEmpty()) {
+            deviceRepository.refreshDevices()
+            devices = deviceRepository.observeDevices().first()
+        }
         val device = prefs?.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
             ?: devices.firstOrNull { it.assignedUserId == session.userId }
             ?: devices.firstOrNull()
@@ -39,12 +43,15 @@ class AlertPollingWorker @AssistedInject constructor(
         val previousIds = deviceRepository.getCachedAlerts().map { it.id }.toSet()
         deviceRepository.refreshAlerts(device.id)
         val alerts = deviceRepository.getCachedAlerts()
-        val newCriticals = alerts.filter { it.id !in previousIds && (it.severity.equals("HIGH", true) || it.severity.equals("CRITICAL", true)) }
+        val newCriticals = alerts.filter { alert ->
+            alert.id !in previousIds &&
+                (alert.severity.equals("HIGH", true) || alert.severity.equals("CRITICAL", true))
+        }
         newCriticals.forEach { alert ->
             showNotification(alert.message, alert.severity)
         }
-        return Result.success()
-    }
+        Result.success()
+    }.getOrElse { Result.retry() }
 
     private fun showNotification(message: String, severity: String) {
         val channelId = "NOTIF_CHANNEL_ALERTS"

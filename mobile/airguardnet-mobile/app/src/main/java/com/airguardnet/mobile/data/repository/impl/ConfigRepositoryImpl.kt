@@ -13,7 +13,7 @@ class ConfigRepositoryImpl(private val api: AirGuardNetApiService) : ConfigRepos
     override val sensorConfigs: Flow<List<SensorConfig>> = _sensorConfigs.asStateFlow()
 
     override suspend fun refreshSensorConfigs() {
-        val response = api.getSensorConfigs()
+        val response = runCatching { api.getSensorConfigs() }.getOrNull() ?: return
         if (response.success && response.data != null) {
             _sensorConfigs.value = response.data.map { it.toDomain() }
         }

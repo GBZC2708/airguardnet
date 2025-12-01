@@ -24,7 +24,6 @@ playServicesMaps = "18.2.0"
 playServicesLocation = "21.2.0"
 coil = "2.6.0"
 paging = "3.2.1"
-materialIcons = "1.6.8"
 coroutines = "1.8.1"
 serializationJson = "1.6.3"
 workerHilt = "1.2.0"
@@ -64,7 +63,7 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
-androidx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIcons" }
+androidx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
 org-jetbrains-kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 org-jetbrains-kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 org-jetbrains-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serializationJson" }

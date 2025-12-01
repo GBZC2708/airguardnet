@@ -28,7 +28,7 @@ class DeviceRepositoryImpl(
     }
 
     override suspend fun refreshDevices() {
-        val response = api.getDevices()
+        val response = runCatching { api.getDevices() }.getOrNull() ?: return
         if (response.success && response.data != null) {
             deviceDao.clear()
             deviceDao.insertAll(response.data.map { it.toEntity() })
@@ -36,7 +36,7 @@ class DeviceRepositoryImpl(
     }
 
     override suspend fun refreshReadings(deviceId: Long) {
-        val response = api.getDeviceReadings(deviceId)
+        val response = runCatching { api.getDeviceReadings(deviceId) }.getOrNull() ?: return
         if (response.success && response.data != null) {
             readingDao.clearForDevice(deviceId)
             readingDao.insertAll(response.data.map { it.toEntity() })
@@ -44,7 +44,7 @@ class DeviceRepositoryImpl(
     }
 
     override suspend fun refreshAlerts(deviceId: Long) {
-        val response = api.getAlerts()
+        val response = runCatching { api.getAlerts() }.getOrNull() ?: return
         if (response.success && response.data != null) {
             alertDao.clearAll()
             alertDao.insertAll(response.data.map { it.toEntity() })
