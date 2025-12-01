@@ -110,12 +110,19 @@ fun RealtimeDemoScreen(viewModel: RealtimeDemoViewModel = hiltViewModel()) {
 private fun DemoChart(readings: List<DemoReading>) {
     val points = readings.takeLast(20)
     val maxValue = max(points.maxOfOrNull { it.pm25 } ?: 1f, 1f)
+
+    // OBTENEMOS LOS COLORES AQUÍ (contexto @Composable)
+    val barColor = MaterialTheme.colorScheme.primary
+    val borderColor = MaterialTheme.colorScheme.outline
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
             .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         if (points.isEmpty()) {
             Column(
@@ -128,22 +135,29 @@ private fun DemoChart(readings: List<DemoReading>) {
                 Text("Aún no hay datos simulados")
             }
         } else {
-            Canvas(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+            ) {
                 val barWidth = size.width / points.size
+
                 points.forEachIndexed { index, reading ->
                     val barHeight = (reading.pm25 / maxValue) * size.height
+
                     drawRoundRect(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = barColor,
                         topLeft = Offset(
                             x = barWidth * index + barWidth * 0.1f,
                             y = size.height - barHeight
                         ),
-                        size = Size(barWidth * 0.8f, barHeight),
+                        size = Size(width = barWidth * 0.8f, height = barHeight),
                         cornerRadius = CornerRadius(8f, 8f)
                     )
                 }
+
                 drawRect(
-                    color = MaterialTheme.colorScheme.outline,
+                    color = borderColor,
                     style = Stroke(width = 2f),
                     size = size
                 )
@@ -151,6 +165,7 @@ private fun DemoChart(readings: List<DemoReading>) {
         }
     }
 }
+
 
 @Composable
 private fun severityFor(pm25: Float?): Pair<String, Color> {
