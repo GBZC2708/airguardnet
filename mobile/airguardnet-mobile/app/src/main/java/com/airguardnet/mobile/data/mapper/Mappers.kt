@@ -16,6 +16,7 @@ import com.airguardnet.mobile.domain.model.Hotspot
 import com.airguardnet.mobile.domain.model.Reading
 import com.airguardnet.mobile.domain.model.SensorConfig
 import com.airguardnet.mobile.domain.model.UserSession
+import java.time.Instant
 
 fun AuthResponseDto.toEntity(): UserSessionEntity = UserSessionEntity(
     userId = userId ?: 0L,
@@ -29,17 +30,66 @@ fun AuthResponseDto.toEntity(): UserSessionEntity = UserSessionEntity(
 
 fun UserSessionEntity.toDomain() = UserSession(userId, name, email, role, planId, jwtToken, lastLoginAt)
 
-fun DeviceDto.toEntity() = DeviceEntity(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
+fun DeviceDto.toEntity() = DeviceEntity(
+    id = id,
+    deviceUid = deviceUid,
+    name = name,
+    status = status,
+    lastCommunicationAt = lastCommunicationAt.toEpochMillisOrNull(),
+    lastBatteryLevel = lastBatteryLevel,
+    assignedUserId = assignedUserId
+)
+
 fun DeviceEntity.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
-fun DeviceDto.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
+
+fun DeviceDto.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt.toEpochMillisOrNull(), lastBatteryLevel, assignedUserId)
 
 fun ReadingDto.toEntity() = ReadingEntity(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)
+
 fun ReadingEntity.toDomain() = Reading(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)
 
-fun AlertDto.toEntity() = AlertEntity(id, deviceId, readingId, severity, status, message, createdAt, resolvedAt)
+fun AlertDto.toEntity() = AlertEntity(
+    id = id,
+    deviceId = deviceId,
+    readingId = readingId,
+    severity = severity,
+    status = status,
+    message = message,
+    createdAt = createdAt.toEpochMillisOrNull(),
+    resolvedAt = resolvedAt.toEpochMillisOrNull()
+)
+
 fun AlertEntity.toDomain() = Alert(id, deviceId, readingId, severity, status, message, createdAt, resolvedAt)
 
 fun HotspotEntity.toDomain() = Hotspot(id, deviceId, recordedAt, pm25, severity, latitude, longitude)
-fun Hotspot.toEntity() = HotspotEntity(id = if (id == 0L) 0 else id, deviceId = deviceId, recordedAt = recordedAt, pm25 = pm25, severity = severity, latitude = latitude, longitude = longitude)
 
-fun SensorConfigDto.toDomain() = SensorConfig(id, name, pm25Warning, pm25Critical, pm10Warning, pm10Critical, riskIndexSafeMax, riskIndexWarningMax)
+fun Hotspot.toEntity() = HotspotEntity(
+    id = if (id == 0L) 0 else id,
+    deviceId = deviceId,
+    recordedAt = recordedAt,
+    pm25 = pm25,
+    severity = severity,
+    latitude = latitude,
+    longitude = longitude
+)
+
+fun SensorConfigDto.toDomain() = SensorConfig(
+    id,
+    name,
+    pm25Warning,
+    pm25Critical,
+    pm10Warning,
+    pm10Critical,
+    riskIndexSafeMax,
+    riskIndexWarningMax
+)
+
+private fun String?.toEpochMillisOrNull(): Long? {
+    if (this.isNullOrBlank()) return null
+    return runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
+}
+
+private fun Long?.toIsoInstantOrNull(): String? {
+    if (this == null) return null
+    return Instant.ofEpochMilli(this).toString()
+}

@@ -150,7 +150,7 @@ class AlertsViewModel @Inject constructor(
         deviceUid = deviceId.toString(),
         severity = severity,
         message = message,
-        timestampFormatted = formatter.format(Date(createdAt)),
+        timestampFormatted = formatter.format(Date(createdAt ?: 0L)),
         isCritical = severity.equals("CRITICAL", true)
     )
 }

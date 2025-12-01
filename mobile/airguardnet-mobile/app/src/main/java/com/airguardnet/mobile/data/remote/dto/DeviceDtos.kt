@@ -9,7 +9,7 @@ data class DeviceDto(
     @SerialName("deviceUid") val deviceUid: String,
     @SerialName("name") val name: String,
     @SerialName("status") val status: String? = null,
-    @SerialName("lastCommunicationAt") val lastCommunicationAt: Long? = null,
+    @SerialName("lastCommunicationAt") val lastCommunicationAt: String? = null,
     @SerialName("lastBatteryLevel") val lastBatteryLevel: Double? = null,
     @SerialName("assignedUserId") val assignedUserId: Long? = null
 )
@@ -35,8 +35,8 @@ data class AlertDto(
     @SerialName("severity") val severity: String,
     @SerialName("status") val status: String,
     @SerialName("message") val message: String,
-    @SerialName("createdAt") val createdAt: Long,
-    @SerialName("resolvedAt") val resolvedAt: Long? = null
+    @SerialName("createdAt") val createdAt: String? = null,
+    @SerialName("resolvedAt") val resolvedAt: String? = null
 )
 
 @Serializable

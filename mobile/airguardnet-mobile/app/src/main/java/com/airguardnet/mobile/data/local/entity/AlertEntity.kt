@@ -11,6 +11,6 @@ data class AlertEntity(
     val severity: String,
     val status: String,
     val message: String,
-    val createdAt: Long,
+    val createdAt: Long?,
     val resolvedAt: Long?
 )
