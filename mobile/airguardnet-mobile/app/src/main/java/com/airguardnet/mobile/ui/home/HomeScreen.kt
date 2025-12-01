@@ -27,7 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), onHistory: () -> Unit, onRealtimeDemo: () -> Unit) {
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
+    onHistory: () -> Unit,
+    onRealtimeDemo: () -> Unit,
+    onRealtimeLive: () -> Unit
+) {
     val state by viewModel.state.collectAsState()
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -82,6 +87,8 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel(), onHistory: () -> Unit
         }
         Spacer(modifier = Modifier.height(12.dp))
         Button(onClick = onRealtimeDemo, modifier = Modifier.fillMaxWidth()) { Text("Simulador en tiempo real (demo)") }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onRealtimeLive, modifier = Modifier.fillMaxWidth()) { Text("Tiempo real conectado (backend)") }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = onHistory, modifier = Modifier.fillMaxWidth()) { Text("Ver detalle") }
     }

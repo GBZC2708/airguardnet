@@ -19,7 +19,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class AlertFilter(val label: String) { ALL("Todas"), CRITICAL("Críticas"), OTHER("Otras") }
+enum class AlertFilter(val label: String) { ALL("Todas"), CRITICAL("Críticas"), OTHER("Otras");
+    companion object {
+        fun fromString(value: String?): AlertFilter = when (value?.uppercase()) {
+            "CRITICAL" -> CRITICAL
+            "OTHER" -> OTHER
+            else -> ALL
+        }
+    }
+}
 
 data class AlertUi(
     val id: String,
@@ -51,6 +59,7 @@ class AlertsViewModel @Inject constructor(
     val state: StateFlow<AlertsState> = _state
     private var cachedAlerts: List<Alert> = emptyList()
     private val formatter = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+    private var initialFilterApplied = false
 
     init {
         viewModelScope.launch {
@@ -83,6 +92,13 @@ class AlertsViewModel @Inject constructor(
         _state.update { it.copy(selectedFilter = filter) }
         applyFilter(filter)
         refresh()
+    }
+
+    fun applyInitialFilter(filter: AlertFilter) {
+        if (initialFilterApplied) return
+        initialFilterApplied = true
+        _state.update { it.copy(selectedFilter = filter) }
+        applyFilter(filter)
     }
 
     private fun applyFilter(filter: AlertFilter) {

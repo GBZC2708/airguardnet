@@ -1,60 +1,53 @@
 # AirGuardNet Mobile
 
-Aplicación Android para monitoreo de calidad de aire de la plataforma AirGuardNet. Se construye en Kotlin con Jetpack Compose siguiendo MVVM por capas y consume el backend existente sin modificaciones.
+Aplicación Android (Jetpack Compose + MVVM + Hilt + WorkManager + DataStore + Widgets) para monitoreo de calidad de aire. Esta guía permite a un profesor clonar, configurar y probar todas las funciones con backend real o en modo demo.
 
-## Stack técnico
-- **UI:** Jetpack Compose + Navigation.
-- **Arquitectura:** MVVM con flujos de datos basados en `StateFlow` y `Flow`.
-- **Inyección:** Hilt para vistas, repositorios, workers y widgets.
-- **Red:** Retrofit + OkHttp + Kotlinx Serialization contra `http://192.168.1.12:8080/api/` (ver `core/network/ApiConstants.kt`).
-- **Persistencia:** Room para sesión, dispositivos, lecturas, alertas y hotspots.
-- **Preferencias:** DataStore para flags locales (p. ej. notificaciones críticas o dispositivo principal).
-- **Background:** WorkManager (`AlertPollingWorker`) para sondear alertas y generar notificaciones locales.
-- **Widgets:** Semáforo y Resumen que leen los últimos datos desde Room.
-- **Mapas:** Google Maps + Location Services para centrar en la ubicación actual y mostrar hotspots reales.
-- **Notificaciones:** Canal de sesión que avisa al iniciar sesión y canal de alertas críticas usado por `AlertPollingWorker`.
+## Requerimientos
+- **Android Studio recomendado:** Giraffe/Koala o superior.
+- **SDK:** minSdk 26, targetSdk 34. Instalar desde el SDK Manager de Android Studio.
+- **Dispositivo/emulador:** API 30+ (emulador Pixel 5/6 recomendado). En dispositivo físico usar la IP LAN del backend.
+- **Clonar el repo:** `git clone https://.../airguardnet` y abrir `mobile/airguardnet-mobile`.
 
-## Requisitos previos
-1. Backend levantado en `http://192.168.1.12:8080` (gateway expone `/api/**`).
-2. Dispositivo físico o emulador en la misma red WiFi del backend.
-3. Permisos de ubicación (`ACCESS_FINE_LOCATION`) concedidos para centrar el mapa.
-4. Clave de Google Maps configurada en `AndroidManifest.xml` (`com.google.android.geo.API_KEY`).
-5. Habilitar notificaciones en el dispositivo para recibir alertas y la confirmación de inicio de sesión.
+## Backend (resumen rápido)
+- Base de datos `airguardnet` (PostgreSQL) con usuario `postgres` y contraseña `1234`.
+- Microservicios levantados con gateway en `http://192.168.1.12:8080` (ajustar a tu LAN). La app ya usa `/api/**` vía gateway.
+- No cambies `BASE_URL` (definido en `app/src/main/java/com/airguardnet/mobile/core/network/ApiConstants.kt`). Usa la IP LAN en el backend.
 
-> **Importante:** No cambiar `BASE_URL`; está fijada en `mobile/airguardnet-mobile/app/src/main/java/com/airguardnet/mobile/core/network/ApiConstants.kt`.
+## Configuración de la app móvil
+- Abrir el módulo `airguardnet-mobile` en Android Studio y sincronizar Gradle (no cambies versiones ni dependencias).
+- Conceder permisos de ubicación y notificaciones en el dispositivo/emulador.
+- Credenciales sugeridas para pruebas (ya existentes en backend):
+  - admin@airguard.net / Admin123
+  - supervisor@airguard.net / Supervisor123
+  - tecnico@airguard.net / Tecnico123
+  - operador@airguard.net / Operador123
 
-## Cómo correr la app
-- **Android Studio:** Abrir el módulo `mobile/airguardnet-mobile` y ejecutar la app en un dispositivo/emulador conectado a la misma red.
-- **CLI:** Desde la raíz del monorepo ejecutar `./gradlew :airguardnet-mobile:app:assembleDebug`.
+## Flujo de pruebas por pantalla
+- **Login:** ingresar credenciales. Verifica error con datos inválidos y éxito con las cuentas anteriores. Al iniciar sesión aparece notificación local (canal `session_channel`).
+- **Home:** muestra semáforo personal con PM1/PM2.5/PM10 y batería de la última lectura. Botón “Actualizar” llama al backend. Si no hay dispositivo asignado, verás mensaje claro.
+- **Historial:** lista de lecturas del dispositivo principal con filtros rápidos (hoy/24h/7d). Usa “Actualizar” para sincronizar.
+- **Alertas:** filtra por severidad (Todas, Críticas, Otras). El filtro CRITICAL se abre automáticamente al tocar la notificación de alertas críticas.
+- **Mapa:** acepta permisos; recentra en tu ubicación o usa fallback. Muestra hotspots reales.
+- **Perfil:** muestra nombre, email, rol, plan, dispositivo asignado, última lectura y alertas 24h. Activa/desactiva “Notificaciones críticas” (afecta el worker de alertas). Desde aquí puedes cerrar sesión.
 
-## Flujo de sesión
-- **Login real** contra `/api/login`, validando email y contraseña. Se persisten token, rol y datos básicos en Room/DataStore.
-- Si la sesión es válida al abrir la app, se navega directo al Home; si el backend responde `401`, se limpian datos y se vuelve al login.
-- **Cerrar sesión** desde Perfil limpia sesión, cancela workers y redirige al login.
+## Pantallas de tiempo real
+- **Modo DEMO:** `Home -> Simulador en tiempo real (demo)` mantiene generación aleatoria en memoria, sin tocar backend.
+- **Modo conectado:** `Home -> Tiempo real conectado (backend)`. Requiere backend activo y dispositivo con lecturas. Muestra PM1/PM2.5/PM10/batería en vivo, riesgo, calidad %, historial y estados (cargando/error/vacío). Botón “Actualizar ahora” fuerza un refresh; “Ir a modo DEMO” vuelve al simulador.
 
-## Pantallas principales
-- **Home:** Semáforo personal con PM1/PM2.5/PM10 de la última lectura. Botón de actualizar que refresca lecturas; muestra mensaje claro si no hay dispositivo asignado. Preparado para mostrar batería cuando el backend la exponga.
-- **Detalle de dispositivo:** Acceso desde "Ver detalle" en Home. Lista las últimas lecturas con gráfico simple y alertas recientes. Incluye modo demo para simular lecturas en memoria (marcado como DEMO y sin tocar Room/backend).
-- **Historial:** Listado de lecturas del dispositivo principal con filtros rápidos (hoy, 24h, 7 días) y botón de actualizar que sincroniza con el backend. Mensaje amigable si no hay datos.
-- **Alertas:** Lista real de alertas para el dispositivo principal según rol. Permite refrescar; muestra nivel, descripción, timestamp y PM detonantes. Mensaje claro cuando no hay alertas.
-- **Mapa:** Solicita permisos y centra en la ubicación actual; fallback a coordenada por defecto si no hay permisos. Muestra hotspots reales con infocard al tocarlos.
-- **Perfil:** Muestra nombre, email, rol, plan, dispositivo asignado, último acceso y estado de cuenta si lo expone el backend. Incluye switch de notificaciones críticas y botón de cerrar sesión.
-
-## Selección de dispositivo principal
-- Se usa `primaryDeviceId` en preferencias; si no existe, se toma el primer dispositivo asignado al usuario.
-- Home, historial, alertas y widgets leen siempre este dispositivo. Si el usuario no tiene dispositivo asignado, se muestra mensaje y se deshabilitan acciones de refresco que dependan de él.
+## Notificaciones y Worker
+- **AlertPollingWorker:** corre cada ~15 min (WorkManager) y consulta alertas. Si hay sesión activa, notificaciones críticas habilitadas y nuevas alertas con severidad `CRITICAL`, envía una notificación agrupada (canal `critical_alerts_channel`). Al tocarla abre la pestaña Alertas con filtro CRITICAL.
+- Para forzar prueba: genera alertas críticas en el backend para el dispositivo asignado, espera el ciclo del worker o ejecuta el worker manualmente desde Android Studio > Background Work.
 
 ## Widgets
-- **Semáforo:** Usa la última lectura del dispositivo principal para mostrar estado (Seguro/Precaución/Peligroso) y PM2.5 (o `--` si no hay datos).
-- **Resumen:** Muestra nombre corto del usuario, PM2.5 y estado; indica si hay alertas críticas recientes.
-- Se actualizan al entrar a la app, al refrescar lecturas y cuando el `AlertPollingWorker` detecta alertas críticas nuevas.
+- **Semáforo:** muestra PM2.5, estado de riesgo (color y etiqueta) y batería del dispositivo principal. Pulsa el widget para abrir Home.
+- **Resumen:** muestra usuario actual, última PM2.5 y conteo de alertas críticas en 24h. Pulsa para abrir Alertas.
+- Ambos widgets refrescan datos desde backend/Room cuando se añaden o al tocar el área.
 
-## AlertPollingWorker y notificaciones
-- Ejecuta sondeos periódicos al backend para detectar alertas críticas nuevas comparadas con las persistidas.
-- Respeta el switch de "notificaciones críticas" en preferencias: si está apagado, no muestra notificaciones del sistema.
-- Al tocar una notificación se abre la app directamente en la pestaña de Alertas con la lista sincronizada.
-- Al iniciar sesión con éxito se dispara una notificación local (canal `session_channel`) que lleva al Home.
+## Notas y limitaciones
+- El “tiempo real” es polling (no WebSocket). Intervalo ~8s en pantalla en vivo y 15 min en worker.
+- Si el backend no está disponible, el modo demo sigue funcionando; las pantallas muestran estados vacíos/errores amigables.
+- No cambies versiones de Kotlin/Compose/Gradle/Hilt/Retrofit ni `BASE_URL`.
 
-## Notas adicionales
-- No modificar el backend ni el frontend web desde este módulo; el cliente móvil solo consume los endpoints existentes.
-- El código está listo para mapear campos adicionales del dispositivo (batería, estado online) cuando el backend los publique, usando propiedades nullables y mapeos de dominio/UI.
+## Comandos útiles
+- Compilar en CLI: `./gradlew :app:assembleDebug`
+- Limpiar datos de la app (si cambiaste de IP): desinstala la app o borra datos para resetear sesión y preferencias.
