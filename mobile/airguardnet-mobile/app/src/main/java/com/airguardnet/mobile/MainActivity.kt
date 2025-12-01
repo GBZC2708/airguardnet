@@ -64,7 +64,7 @@ fun AirGuardNetRoot(viewModel: RootViewModel = androidx.hilt.navigation.compose.
     AirGuardNetTheme {
         Scaffold(
             bottomBar = {
-                if (currentRoute != NavRoutes.Login.route) {
+                if (currentRoute != null && currentRoute != NavRoutes.Login.route) {
                     NavigationBar {
                         bottomNavItems.forEach { item ->
                             NavigationBarItem(
