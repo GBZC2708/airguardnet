@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -15,7 +16,8 @@ private val Context.dataStore by preferencesDataStore(name = "airguardnet_prefs"
 
 data class UserPreferences(
     val criticalNotificationsEnabled: Boolean = true,
-    val primaryDeviceId: Long? = null
+    val primaryDeviceId: Long? = null,
+    val lastEmail: String? = null
 )
 
 @Singleton
@@ -23,11 +25,13 @@ class UserPreferencesManager @Inject constructor(@ApplicationContext context: Co
     private val store = context.dataStore
     private val criticalKey = booleanPreferencesKey("critical_notifications")
     private val primaryDeviceKey = longPreferencesKey("primary_device")
+    private val lastEmailKey = stringPreferencesKey("last_email")
 
     val preferences: Flow<UserPreferences> = store.data.map { prefs ->
         UserPreferences(
             criticalNotificationsEnabled = prefs[criticalKey] ?: true,
-            primaryDeviceId = prefs[primaryDeviceKey]?.takeIf { it > 0 }
+            primaryDeviceId = prefs[primaryDeviceKey]?.takeIf { it > 0 },
+            lastEmail = prefs[lastEmailKey]
         )
     }
 
@@ -43,6 +47,16 @@ class UserPreferencesManager @Inject constructor(@ApplicationContext context: Co
                 prefs[primaryDeviceKey] = id
             } else {
                 prefs.remove(primaryDeviceKey)
+            }
+        }
+    }
+
+    suspend fun setLastEmail(email: String) {
+        store.edit { prefs ->
+            if (email.isNotBlank()) {
+                prefs[lastEmailKey] = email
+            } else {
+                prefs.remove(lastEmailKey)
             }
         }
     }
