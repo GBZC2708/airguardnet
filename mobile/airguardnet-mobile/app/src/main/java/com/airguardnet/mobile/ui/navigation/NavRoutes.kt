@@ -6,5 +6,6 @@ enum class NavRoutes(val route: String) {
     History("history"),
     Alerts("alerts"),
     Map("map"),
-    Profile("profile")
+    Profile("profile"),
+    RealtimeDemo("realtime_demo")
 }
