@@ -31,6 +31,7 @@ import com.airguardnet.mobile.ui.navigation.NavRoutes
 import com.airguardnet.mobile.ui.navigation.bottomNavItems
 import com.airguardnet.mobile.ui.navigation.RootViewModel
 import com.airguardnet.mobile.ui.profile.ProfileScreen
+import com.airguardnet.mobile.ui.realtimedemo.RealtimeDemoScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -86,11 +87,17 @@ fun AirGuardNetRoot(viewModel: RootViewModel = androidx.hilt.navigation.compose.
         ) { padding ->
             NavHost(navController = navController, startDestination = NavRoutes.Login.route, modifier = Modifier.padding(padding)) {
                 composable(NavRoutes.Login.route) { AuthScreen(onLoggedIn = { navController.navigate(NavRoutes.Home.route) { popUpTo(NavRoutes.Login.route) { inclusive = true } } }) }
-                composable(NavRoutes.Home.route) { HomeScreen(onHistory = { navController.navigate(NavRoutes.History.route) }) }
+                composable(NavRoutes.Home.route) {
+                    HomeScreen(
+                        onHistory = { navController.navigate(NavRoutes.History.route) },
+                        onRealtimeDemo = { navController.navigate(NavRoutes.RealtimeDemo.route) }
+                    )
+                }
                 composable(NavRoutes.History.route) { HistoryScreen() }
                 composable(NavRoutes.Alerts.route) { AlertsScreen() }
                 composable(NavRoutes.Map.route) { MapScreen() }
                 composable(NavRoutes.Profile.route) { ProfileScreen(onLoggedOut = { navController.navigate(NavRoutes.Login.route) { popUpTo(0) { inclusive = true } } }) }
+                composable(NavRoutes.RealtimeDemo.route) { RealtimeDemoScreen() }
             }
         }
     }

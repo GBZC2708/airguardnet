@@ -1,10 +1,12 @@
 package com.airguardnet.mobile.core.notifications
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -12,23 +14,34 @@ import com.airguardnet.mobile.MainActivity
 import com.airguardnet.mobile.R
 
 object NotificationHelper {
-    private const val SESSION_CHANNEL_ID = "session_channel"
+    const val SESSION_CHANNEL_ID = "session_channel"
     private const val SESSION_NOTIFICATION_ID = 2010
 
-    fun showSessionNotification(context: Context, role: String) {
-        val manager = NotificationManagerCompat.from(context)
+    fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val manager = NotificationManagerCompat.from(context)
+            val sessionChannel = NotificationChannel(
                 SESSION_CHANNEL_ID,
                 "Sesiones AirGuardNet",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
-            manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(sessionChannel)
+        }
+    }
+
+    fun showSessionNotification(context: Context, role: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission =
+                context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) return
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("fromNotification", true)
+            putExtra("targetTab", "home")
         }
+
         val pendingIntent = PendingIntent.getActivity(
             context,
             SESSION_NOTIFICATION_ID,
@@ -44,6 +57,6 @@ object NotificationHelper {
             .setContentIntent(pendingIntent)
             .build()
 
-        manager.notify(SESSION_NOTIFICATION_ID, notification)
+        NotificationManagerCompat.from(context).notify(SESSION_NOTIFICATION_ID, notification)
     }
 }
