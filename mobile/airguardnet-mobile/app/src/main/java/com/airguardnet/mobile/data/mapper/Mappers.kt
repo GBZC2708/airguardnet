@@ -31,6 +31,7 @@ fun UserSessionEntity.toDomain() = UserSession(userId, name, email, role, planId
 
 fun DeviceDto.toEntity() = DeviceEntity(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
 fun DeviceEntity.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
+fun DeviceDto.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt, lastBatteryLevel, assignedUserId)
 
 fun ReadingDto.toEntity() = ReadingEntity(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)
 fun ReadingEntity.toDomain() = Reading(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)

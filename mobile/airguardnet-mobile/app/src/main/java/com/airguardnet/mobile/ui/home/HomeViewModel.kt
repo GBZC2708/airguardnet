@@ -3,6 +3,8 @@ package com.airguardnet.mobile.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.airguardnet.mobile.core.preferences.UserPreferencesManager
+import com.airguardnet.mobile.data.mapper.toDomain
+import com.airguardnet.mobile.data.repository.DeviceRepository
 import com.airguardnet.mobile.core.utils.qualityPercent
 import com.airguardnet.mobile.core.utils.resolveRiskBand
 import com.airguardnet.mobile.domain.model.Device
@@ -50,12 +52,15 @@ class HomeViewModel @Inject constructor(
     private val observeReadingsUseCase: ObserveReadingsUseCase,
     private val refreshDevicesUseCase: RefreshDevicesUseCase,
     private val refreshReadingsUseCase: RefreshReadingsUseCase,
-    preferencesManager: UserPreferencesManager
+    private val preferencesManager: UserPreferencesManager,
+    private val deviceRepository: DeviceRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
     private var readingsJob: Job? = null
     private val dateFormatter = SimpleDateFormat("HH:mm / dd-MM-yyyy", Locale.getDefault())
+    private var assignedLookupDone = false
+    private var currentUserId: Long? = null
 
     init {
         viewModelScope.launch {
@@ -63,10 +68,22 @@ class HomeViewModel @Inject constructor(
                 observeSessionUseCase(),
                 observeDevicesUseCase(),
                 preferencesManager.preferences
-            ) { _, devices, prefs ->
-                prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
-                    ?: devices.firstOrNull()
-            }.collect { device ->
+            ) { session, devices, prefs ->
+                Triple(session, devices, prefs)
+            }.collect { (session, devices, prefs) ->
+                if (currentUserId != session?.userId) {
+                    assignedLookupDone = false
+                }
+                currentUserId = session?.userId
+                val remoteAssigned = if (!assignedLookupDone && session?.userId != null) {
+                    assignedLookupDone = true
+                    runCatching { deviceRepository.getAssignedDeviceForUser(session.userId) }.getOrNull()
+                } else null
+                remoteAssigned?.id?.let { preferencesManager.setPrimaryDevice(it) }
+                val assigned = remoteAssigned?.toDomain()
+                    ?: session?.let { user -> devices.firstOrNull { it.assignedUserId == user.userId } }
+                val preferred = prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
+                val device = preferred ?: assigned ?: devices.firstOrNull()
                 _state.update { it.copy(device = device) }
                 device?.let { listenReadings(it.id) }
             }
@@ -96,8 +113,16 @@ class HomeViewModel @Inject constructor(
             runCatching { refreshDevicesUseCase() }.onFailure {
                 _state.update { state -> state.copy(errorMessage = "No se pudo cargar dispositivos") }
             }
-            _state.value.device?.let { device ->
-                runCatching { refreshReadingsUseCase(device.id) }.onFailure { throwable ->
+            val deviceId = _state.value.device?.id ?: run {
+                val userId = currentUserId
+                val assigned = userId?.let { runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull() }
+                assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
+                assigned?.toDomain()?.also { selected ->
+                    _state.update { state -> state.copy(device = state.device ?: selected) }
+                }?.id
+            }
+            deviceId?.let { id ->
+                runCatching { refreshReadingsUseCase(id) }.onFailure { throwable ->
                     _state.update { state -> state.copy(errorMessage = throwable.message ?: "No se pudo cargar la última lectura") }
                 }
             }

@@ -6,6 +6,7 @@ import com.airguardnet.mobile.core.network.ApiConstants
 import com.airguardnet.mobile.data.local.AirGuardNetDatabase
 import com.airguardnet.mobile.data.local.dao.UserSessionDao
 import com.airguardnet.mobile.data.remote.AirGuardNetApiService
+import com.airguardnet.mobile.data.repository.DeviceRepository as RemoteDeviceRepository
 import com.airguardnet.mobile.data.repository.impl.AuthRepositoryImpl
 import com.airguardnet.mobile.data.repository.impl.ConfigRepositoryImpl
 import com.airguardnet.mobile.data.repository.impl.DeviceRepositoryImpl
@@ -106,8 +107,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(api: AirGuardNetApiService, userSessionDao: UserSessionDao): AuthRepository =
-        AuthRepositoryImpl(api, userSessionDao)
+    fun provideAuthRepository(
+        api: AirGuardNetApiService,
+        userSessionDao: UserSessionDao,
+        preferencesManager: com.airguardnet.mobile.core.preferences.UserPreferencesManager
+    ): AuthRepository =
+        AuthRepositoryImpl(api, userSessionDao, preferencesManager)
+
+    @Provides
+    @Singleton
+    fun provideRemoteDeviceRepository(api: AirGuardNetApiService): RemoteDeviceRepository = RemoteDeviceRepository(api)
 
     @Provides
     @Singleton
