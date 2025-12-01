@@ -48,7 +48,7 @@ class AuthViewModel @Inject constructor(
             val errorMessage = result.exceptionOrNull()?.let { error ->
                 when (error) {
                     is IOException -> "No se pudo conectar al servidor"
-                    else -> error.message ?: "Credenciales inválidas"
+                    else -> error.message.takeUnless { it.isNullOrBlank() } ?: "Credenciales incorrectas"
                 }
             }
             _state.update { it.copy(isLoading = false, error = errorMessage) }
