@@ -5,6 +5,7 @@ import com.airguardnet.mobile.data.mapper.toDomain
 import com.airguardnet.mobile.data.mapper.toEntity
 import com.airguardnet.mobile.data.remote.AirGuardNetApiService
 import com.airguardnet.mobile.data.remote.dto.LoginRequestDto
+import com.airguardnet.mobile.core.network.InvalidCredentialsException
 import com.airguardnet.mobile.domain.model.UserSession
 import com.airguardnet.mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -31,10 +32,10 @@ class AuthRepositoryImpl(
                 userSessionDao.insert(entity)
                 Result.success(entity.toDomain())
             } else {
-                Result.failure(IllegalStateException(response.message ?: "Credenciales incorrectas"))
+                Result.failure(InvalidCredentialsException(response.message ?: "Credenciales incorrectas"))
             }
         } else {
-            Result.failure(IllegalStateException(response.message ?: "Credenciales incorrectas"))
+            Result.failure(InvalidCredentialsException(response.message ?: "Credenciales incorrectas"))
         }
     } catch (io: UnknownHostException) {
         Result.failure(IOException("No se pudo conectar al servidor", io))
@@ -45,7 +46,9 @@ class AuthRepositoryImpl(
     } catch (http: HttpException) {
         if (http.code() == 401) {
             userSessionDao.clear()
-            Result.failure(IllegalStateException("Credenciales incorrectas"))
+            Result.failure(InvalidCredentialsException())
+        } else if (http.code() == 400) {
+            Result.failure(InvalidCredentialsException())
         } else {
             Result.failure(IllegalStateException(http.message()))
         }
