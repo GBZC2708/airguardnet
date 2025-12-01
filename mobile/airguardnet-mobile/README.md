@@ -12,12 +12,14 @@ Aplicación Android para monitoreo de calidad de aire de la plataforma AirGuardN
 - **Background:** WorkManager (`AlertPollingWorker`) para sondear alertas y generar notificaciones locales.
 - **Widgets:** Semáforo y Resumen que leen los últimos datos desde Room.
 - **Mapas:** Google Maps + Location Services para centrar en la ubicación actual y mostrar hotspots reales.
+- **Notificaciones:** Canal de sesión que avisa al iniciar sesión y canal de alertas críticas usado por `AlertPollingWorker`.
 
 ## Requisitos previos
 1. Backend levantado en `http://192.168.1.12:8080` (gateway expone `/api/**`).
 2. Dispositivo físico o emulador en la misma red WiFi del backend.
 3. Permisos de ubicación (`ACCESS_FINE_LOCATION`) concedidos para centrar el mapa.
 4. Clave de Google Maps configurada en `AndroidManifest.xml` (`com.google.android.geo.API_KEY`).
+5. Habilitar notificaciones en el dispositivo para recibir alertas y la confirmación de inicio de sesión.
 
 > **Importante:** No cambiar `BASE_URL`; está fijada en `mobile/airguardnet-mobile/app/src/main/java/com/airguardnet/mobile/core/network/ApiConstants.kt`.
 
@@ -51,6 +53,7 @@ Aplicación Android para monitoreo de calidad de aire de la plataforma AirGuardN
 - Ejecuta sondeos periódicos al backend para detectar alertas críticas nuevas comparadas con las persistidas.
 - Respeta el switch de "notificaciones críticas" en preferencias: si está apagado, no muestra notificaciones del sistema.
 - Al tocar una notificación se abre la app directamente en la pestaña de Alertas con la lista sincronizada.
+- Al iniciar sesión con éxito se dispara una notificación local (canal `session_channel`) que lleva al Home.
 
 ## Notas adicionales
 - No modificar el backend ni el frontend web desde este módulo; el cliente móvil solo consume los endpoints existentes.

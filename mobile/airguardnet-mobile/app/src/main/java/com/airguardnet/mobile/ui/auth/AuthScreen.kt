@@ -22,20 +22,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.text.input.KeyboardType
+import com.airguardnet.mobile.core.notifications.NotificationHelper
 
 @Composable
 fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    var notified by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.isLoggedIn) {
-        if (state.isLoggedIn) onLoggedIn()
+        if (state.isLoggedIn && state.loggedInRole != null && !notified) {
+            notified = true
+            NotificationHelper.showSessionNotification(context, state.loggedInRole)
+            onLoggedIn()
+        }
     }
 
     Column(
