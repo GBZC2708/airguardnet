@@ -4,7 +4,7 @@ import com.airguardnet.mobile.data.local.dao.UserSessionDao
 import com.airguardnet.mobile.data.mapper.toDomain
 import com.airguardnet.mobile.data.mapper.toEntity
 import com.airguardnet.mobile.data.remote.AirGuardNetApiService
-import com.airguardnet.mobile.data.remote.dto.AuthRequestDto
+import com.airguardnet.mobile.data.remote.dto.LoginRequestDto
 import com.airguardnet.mobile.domain.model.UserSession
 import com.airguardnet.mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,13 +18,16 @@ class AuthRepositoryImpl(
     override val session: Flow<UserSession?> = userSessionDao.observeSession().map { it?.toDomain() }
 
     override suspend fun login(email: String, password: String): Result<UserSession> = try {
-        val response = api.login(AuthRequestDto(email, password))
-        if (response.success && response.data != null) {
-            val entity = response.data.toEntity()
+        val response = api.login(LoginRequestDto(email, password))
+        val data = response.data
+        if (response.success && data != null) {
+            val entity = data.toEntity()
             userSessionDao.clear()
             userSessionDao.insert(entity)
             Result.success(entity.toDomain())
-        } else Result.failure(IllegalStateException(response.message ?: "Credenciales inválidas"))
+        } else {
+            Result.failure(IllegalStateException(response.message ?: "Credenciales inválidas"))
+        }
     } catch (io: IOException) {
         Result.failure(IOException("No se pudo conectar al servidor", io))
     } catch (e: Exception) {

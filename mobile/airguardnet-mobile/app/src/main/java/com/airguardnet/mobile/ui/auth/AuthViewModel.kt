@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.airguardnet.mobile.domain.usecase.LoginUseCase
 import com.airguardnet.mobile.domain.usecase.ObserveSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,13 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             val result = loginUseCase(email, pass)
-            _state.update { it.copy(isLoading = false, error = result.exceptionOrNull()?.message) }
+            val errorMessage = result.exceptionOrNull()?.let { error ->
+                when (error) {
+                    is IOException -> "No se pudo conectar al servidor"
+                    else -> error.message ?: "Credenciales inválidas"
+                }
+            }
+            _state.update { it.copy(isLoading = false, error = errorMessage) }
         }
     }
 }

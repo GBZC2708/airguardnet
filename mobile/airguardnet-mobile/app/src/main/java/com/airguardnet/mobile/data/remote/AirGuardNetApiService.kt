@@ -2,8 +2,8 @@ package com.airguardnet.mobile.data.remote
 
 import com.airguardnet.mobile.core.network.ApiResponse
 import com.airguardnet.mobile.data.remote.dto.AlertDto
-import com.airguardnet.mobile.data.remote.dto.AuthRequestDto
-import com.airguardnet.mobile.data.remote.dto.AuthResponseDto
+import com.airguardnet.mobile.data.remote.dto.LoginRequestDto
+import com.airguardnet.mobile.data.remote.dto.LoginResponseDto
 import com.airguardnet.mobile.data.remote.dto.ConfigParameterDto
 import com.airguardnet.mobile.data.remote.dto.DeviceDto
 import com.airguardnet.mobile.data.remote.dto.ReadingDto
@@ -15,7 +15,7 @@ import retrofit2.http.Path
 
 interface AirGuardNetApiService {
     @POST("login")
-    suspend fun login(@Body body: AuthRequestDto): ApiResponse<AuthResponseDto>
+    suspend fun login(@Body body: LoginRequestDto): ApiResponse<LoginResponseDto>
 
     @GET("devices")
     suspend fun getDevices(): ApiResponse<List<DeviceDto>>

@@ -6,7 +6,7 @@ import com.airguardnet.mobile.data.local.entity.HotspotEntity
 import com.airguardnet.mobile.data.local.entity.ReadingEntity
 import com.airguardnet.mobile.data.local.entity.UserSessionEntity
 import com.airguardnet.mobile.data.remote.dto.AlertDto
-import com.airguardnet.mobile.data.remote.dto.AuthResponseDto
+import com.airguardnet.mobile.data.remote.dto.LoginResponseDto
 import com.airguardnet.mobile.data.remote.dto.DeviceDto
 import com.airguardnet.mobile.data.remote.dto.ReadingDto
 import com.airguardnet.mobile.data.remote.dto.SensorConfigDto
@@ -17,13 +17,13 @@ import com.airguardnet.mobile.domain.model.Reading
 import com.airguardnet.mobile.domain.model.SensorConfig
 import com.airguardnet.mobile.domain.model.UserSession
 
-fun AuthResponseDto.toEntity(): UserSessionEntity = UserSessionEntity(
+fun LoginResponseDto.toEntity(): UserSessionEntity = UserSessionEntity(
     userId = userId,
     name = name,
     email = email,
     role = role,
     planId = planId,
-    jwtToken = token,
+    jwtToken = jwtToken,
     lastLoginAt = System.currentTimeMillis()
 )
 
