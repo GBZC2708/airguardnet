@@ -26,7 +26,8 @@ data class AuthState(
     val isNetworkError: Boolean = false,
     val isInvalidCredentials: Boolean = false,
     val isLoggedIn: Boolean = false,
-    val isPasswordVisible: Boolean = false
+    val isPasswordVisible: Boolean = false,
+    val loggedInRole: String? = null
 )
 
 @HiltViewModel
@@ -41,7 +42,7 @@ class AuthViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             observeSessionUseCase().collect { session ->
-                _state.update { it.copy(isLoggedIn = session != null) }
+                _state.update { it.copy(isLoggedIn = session != null, loggedInRole = session?.role) }
             }
         }
 
