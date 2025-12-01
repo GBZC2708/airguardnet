@@ -38,9 +38,8 @@ class HistoryViewModel @Inject constructor(
                 observeSessionUseCase(),
                 observeDevicesUseCase(),
                 preferencesManager.preferences
-            ) { session, devices, prefs ->
+            ) { _, devices, prefs ->
                 prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
-                    ?: session?.let { devices.firstOrNull { it.assignedUserId == it.userId } }
                     ?: devices.firstOrNull()
             }.collect { device ->
                 if (device != null) {
