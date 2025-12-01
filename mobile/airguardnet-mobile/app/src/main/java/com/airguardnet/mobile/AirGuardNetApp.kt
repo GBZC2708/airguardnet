@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.airguardnet.mobile.core.notifications.NotificationHelper
 import com.airguardnet.mobile.worker.AlertPollingWorker
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -21,6 +22,7 @@ class AirGuardNetApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        NotificationHelper.createChannels(this)
         scheduleAlertPolling()
     }
 
