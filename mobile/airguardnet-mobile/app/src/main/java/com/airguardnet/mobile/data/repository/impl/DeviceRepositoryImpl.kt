@@ -38,7 +38,6 @@ class DeviceRepositoryImpl(
     override suspend fun refreshReadings(deviceId: Long) {
         val response = runCatching { api.getDeviceReadings(deviceId) }.getOrNull() ?: return
         if (response.success && response.data != null) {
-            readingDao.clearForDevice(deviceId)
             readingDao.insertAll(response.data.map { it.toEntity() })
         }
     }

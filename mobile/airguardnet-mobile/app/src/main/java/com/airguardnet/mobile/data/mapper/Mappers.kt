@@ -44,7 +44,29 @@ fun DeviceEntity.toDomain() = Device(id, deviceUid, name, status, lastCommunicat
 
 fun DeviceDto.toDomain() = Device(id, deviceUid, name, status, lastCommunicationAt.toEpochMillisOrNull(), lastBatteryLevel, assignedUserId)
 
-fun ReadingDto.toEntity() = ReadingEntity(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)
+fun ReadingDto.toEntity() = ReadingEntity(
+    id = id,
+    deviceId = deviceId,
+    recordedAt = recordedAt.toEpochMillisOrNull() ?: 0L,
+    pm1 = pm1,
+    pm25 = pm25,
+    pm10 = pm10,
+    batteryLevel = batteryLevel,
+    riskIndex = riskIndex,
+    airQualityPercent = airQualityPercent
+)
+
+fun ReadingDto.toDomain() = Reading(
+    id = id,
+    deviceId = deviceId,
+    recordedAt = recordedAt.toEpochMillisOrNull() ?: 0L,
+    pm1 = pm1,
+    pm25 = pm25,
+    pm10 = pm10,
+    batteryLevel = batteryLevel,
+    riskIndex = riskIndex,
+    airQualityPercent = airQualityPercent
+)
 
 fun ReadingEntity.toDomain() = Reading(id, deviceId, recordedAt, pm1, pm25, pm10, batteryLevel, riskIndex, airQualityPercent)
 
