@@ -10,6 +10,10 @@ import com.airguardnet.mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.net.UnknownServiceException
+import retrofit2.HttpException
 
 class AuthRepositoryImpl(
     private val api: AirGuardNetApiService,
@@ -19,14 +23,31 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String): Result<UserSession> = try {
         val response = api.login(LoginRequestDto(email, password))
-        val data = response.data
-        if (response.success && data != null) {
-            val entity = data.toEntity()
-            userSessionDao.clear()
-            userSessionDao.insert(entity)
-            Result.success(entity.toDomain())
+        if (response.success) {
+            val data = response.data
+            if (data != null) {
+                val entity = data.toEntity()
+                userSessionDao.clear()
+                userSessionDao.insert(entity)
+                Result.success(entity.toDomain())
+            } else {
+                Result.failure(IllegalStateException(response.message ?: "Credenciales incorrectas"))
+            }
         } else {
-            Result.failure(IllegalStateException(response.message ?: "Credenciales inválidas"))
+            Result.failure(IllegalStateException(response.message ?: "Credenciales incorrectas"))
+        }
+    } catch (io: UnknownHostException) {
+        Result.failure(IOException("No se pudo conectar al servidor", io))
+    } catch (io: UnknownServiceException) {
+        Result.failure(IOException("No se pudo conectar al servidor", io))
+    } catch (io: SocketTimeoutException) {
+        Result.failure(IOException("No se pudo conectar al servidor", io))
+    } catch (http: HttpException) {
+        if (http.code() == 401) {
+            userSessionDao.clear()
+            Result.failure(IllegalStateException("Credenciales incorrectas"))
+        } else {
+            Result.failure(IllegalStateException(http.message()))
         }
     } catch (io: IOException) {
         Result.failure(IOException("No se pudo conectar al servidor", io))

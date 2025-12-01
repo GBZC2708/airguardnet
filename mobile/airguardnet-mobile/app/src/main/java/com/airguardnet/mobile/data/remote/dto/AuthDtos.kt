@@ -1,6 +1,5 @@
 package com.airguardnet.mobile.data.remote.dto
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,11 +9,11 @@ data class LoginRequestDto(
 )
 
 @Serializable
-data class LoginResponseDto(
-    @SerialName("jwtToken") val jwtToken: String,
-    val userId: Long,
-    val name: String,
-    val email: String,
-    val role: String,
-    val planId: Long
+data class AuthResponseDto(
+    val token: String? = null,
+    val userId: Long? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val role: String? = null,
+    val planId: Long? = null
 )
