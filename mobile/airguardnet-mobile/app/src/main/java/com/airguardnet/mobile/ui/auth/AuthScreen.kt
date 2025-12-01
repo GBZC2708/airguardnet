@@ -44,7 +44,10 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn && state.loggedInRole != null && !notified) {
             notified = true
-            NotificationHelper.showSessionNotification(context, state.loggedInRole)
+            NotificationHelper.showSessionNotification(
+                context = context,
+                role = state.loggedInRole ?: "Sin rol"
+            )
             onLoggedIn()
         }
     }
