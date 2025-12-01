@@ -10,37 +10,47 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.airguardnet.mobile.R
+import com.airguardnet.mobile.core.preferences.UserPreferencesManager
 import com.airguardnet.mobile.domain.repository.DeviceRepository
 import com.airguardnet.mobile.domain.usecase.ObserveSessionUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 
 @HiltWorker
 class AlertPollingWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val deviceRepository: DeviceRepository,
-    private val observeSessionUseCase: ObserveSessionUseCase
+    private val observeSessionUseCase: ObserveSessionUseCase,
+    private val preferencesManager: UserPreferencesManager
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        val prefs = preferencesManager.preferences.firstOrNull()
+        if (prefs != null && !prefs.criticalNotificationsEnabled) return Result.success()
         val session = observeSessionUseCase().first() ?: return Result.success()
         val devices = deviceRepository.observeDevices().first()
-        val device = devices.firstOrNull { it.assignedUserId == session.userId } ?: return Result.success()
+        val device = prefs?.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
+            ?: devices.firstOrNull { it.assignedUserId == session.userId }
+            ?: devices.firstOrNull()
+            ?: return Result.success()
+
+        val previousIds = deviceRepository.getCachedAlerts().map { it.id }.toSet()
         deviceRepository.refreshAlerts(device.id)
-        val alerts = deviceRepository.observeAlerts(device.id).first()
-        if (alerts.isNotEmpty()) {
-            val latest = alerts.first()
-            showNotification(latest.message, latest.severity)
+        val alerts = deviceRepository.getCachedAlerts()
+        val newCriticals = alerts.filter { it.id !in previousIds && (it.severity.equals("HIGH", true) || it.severity.equals("CRITICAL", true)) }
+        newCriticals.forEach { alert ->
+            showNotification(alert.message, alert.severity)
         }
         return Result.success()
     }
 
     private fun showNotification(message: String, severity: String) {
-        val channelId = if (severity.uppercase() == "CRITICAL") "critical_alerts" else "high_alerts"
+        val channelId = "NOTIF_CHANNEL_ALERTS"
         val manager = NotificationManagerCompat.from(applicationContext)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(channelId, "Alertas AirGuardNet", NotificationManager.IMPORTANCE_HIGH)
             manager.createNotificationChannel(channel)
         }
         val notification = NotificationCompat.Builder(applicationContext, channelId)

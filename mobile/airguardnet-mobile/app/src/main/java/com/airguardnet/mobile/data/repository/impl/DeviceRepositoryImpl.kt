@@ -23,7 +23,9 @@ class DeviceRepositoryImpl(
 
     override fun observeReadings(deviceId: Long): Flow<List<Reading>> = readingDao.observeByDevice(deviceId).map { list -> list.map { it.toDomain() } }
 
-    override fun observeAlerts(deviceId: Long): Flow<List<Alert>> = alertDao.observeForDevice(deviceId).map { it.map { alert -> alert.toDomain() } }
+    override fun observeAlerts(deviceId: Long): Flow<List<Alert>> = alertDao.observeAll().map { alerts ->
+        alerts.filter { it.deviceId == deviceId }.map { alert -> alert.toDomain() }
+    }
 
     override suspend fun refreshDevices() {
         val response = api.getDevices()
@@ -42,10 +44,12 @@ class DeviceRepositoryImpl(
     }
 
     override suspend fun refreshAlerts(deviceId: Long) {
-        val response = api.getDeviceAlerts(deviceId)
+        val response = api.getAlerts()
         if (response.success && response.data != null) {
-            alertDao.clearForDevice(deviceId)
+            alertDao.clearAll()
             alertDao.insertAll(response.data.map { it.toEntity() })
         }
     }
+
+    override suspend fun getCachedAlerts(): List<Alert> = alertDao.getAll().map { it.toDomain() }
 }

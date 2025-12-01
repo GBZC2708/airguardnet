@@ -12,9 +12,18 @@ interface AlertDao {
     @Query("SELECT * FROM alerts WHERE deviceId = :deviceId ORDER BY createdAt DESC")
     fun observeForDevice(deviceId: Long): Flow<List<AlertEntity>>
 
+    @Query("SELECT * FROM alerts ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<AlertEntity>>
+
+    @Query("SELECT * FROM alerts")
+    suspend fun getAll(): List<AlertEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(alerts: List<AlertEntity>)
 
     @Query("DELETE FROM alerts WHERE deviceId = :deviceId")
     suspend fun clearForDevice(deviceId: Long)
+
+    @Query("DELETE FROM alerts")
+    suspend fun clearAll()
 }

@@ -34,11 +34,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -55,21 +57,33 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideApiService(userSessionDao: UserSessionDao): AirGuardNetApiService {
-        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
         val authInterceptor = Interceptor { chain ->
+            val shouldSkipAuth = chain.request().url.encodedPathSegments.contains("login")
             val token = runBlocking { userSessionDao.getSession()?.jwtToken }
-            val request = if (!token.isNullOrBlank()) {
-                chain.request().newBuilder().addHeader("Authorization", "Bearer $token").build()
-            } else chain.request()
-            chain.proceed(request)
+            val requestBuilder = chain.request().newBuilder()
+            if (!shouldSkipAuth && !token.isNullOrBlank()) {
+                requestBuilder.addHeader("Authorization", "Bearer $token")
+            }
+            val response = chain.proceed(requestBuilder.build())
+            if (response.code == 401) {
+                runBlocking { userSessionDao.clear() }
+            }
+            response
         }
         val client = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .build()
+
+        val json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+
         return Retrofit.Builder()
             .baseUrl(ApiConstants.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .client(client)
             .build()
             .create(AirGuardNetApiService::class.java)

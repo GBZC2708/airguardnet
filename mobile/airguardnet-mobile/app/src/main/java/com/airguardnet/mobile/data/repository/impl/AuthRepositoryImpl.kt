@@ -9,6 +9,7 @@ import com.airguardnet.mobile.domain.model.UserSession
 import com.airguardnet.mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 class AuthRepositoryImpl(
     private val api: AirGuardNetApiService,
@@ -23,7 +24,9 @@ class AuthRepositoryImpl(
             userSessionDao.clear()
             userSessionDao.insert(entity)
             Result.success(entity.toDomain())
-        } else Result.failure(IllegalStateException(response.message ?: "Error"))
+        } else Result.failure(IllegalStateException(response.message ?: "Credenciales inválidas"))
+    } catch (io: IOException) {
+        Result.failure(IOException("No se pudo conectar al servidor", io))
     } catch (e: Exception) {
         Result.failure(e)
     }

@@ -12,6 +12,9 @@ interface ReadingDao {
     @Query("SELECT * FROM readings WHERE deviceId = :deviceId ORDER BY recordedAt DESC")
     fun observeByDevice(deviceId: Long): Flow<List<ReadingEntity>>
 
+    @Query("SELECT * FROM readings WHERE deviceId = :deviceId ORDER BY recordedAt DESC LIMIT 1")
+    suspend fun getLatest(deviceId: Long): ReadingEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(readings: List<ReadingEntity>)
 

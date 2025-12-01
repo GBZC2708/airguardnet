@@ -12,4 +12,5 @@ interface DeviceRepository {
     suspend fun refreshDevices()
     suspend fun refreshReadings(deviceId: Long)
     suspend fun refreshAlerts(deviceId: Long)
+    suspend fun getCachedAlerts(): List<Alert>
 }
