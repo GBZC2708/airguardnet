@@ -29,6 +29,7 @@ class HistoryViewModel @Inject constructor(
     private val refreshReadingsUseCase: RefreshReadingsUseCase,
     preferencesManager: UserPreferencesManager
 ) : ViewModel() {
+
     private val _state = MutableStateFlow(HistoryState())
     val state: StateFlow<HistoryState> = _state
 
@@ -39,9 +40,11 @@ class HistoryViewModel @Inject constructor(
                 observeDevicesUseCase(),
                 preferencesManager.preferences
             ) { session, devices, prefs ->
-                prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
-                    ?: session?.let { devices.firstOrNull { it.assignedUserId == it.userId } }
-                    ?: devices.firstOrNull()
+                prefs.primaryDeviceId?.let { id ->
+                    devices.firstOrNull { it.id == id }
+                } ?: session?.let { s ->
+                    devices.firstOrNull { it.assignedUserId == s.userId }
+                } ?: devices.firstOrNull()
             }.collect { device ->
                 if (device != null) {
                     _state.value = _state.value.copy(deviceId = device.id)

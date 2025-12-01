@@ -34,8 +34,10 @@ class HomeViewModel @Inject constructor(
     private val refreshReadingsUseCase: RefreshReadingsUseCase,
     preferencesManager: UserPreferencesManager
 ) : ViewModel() {
+
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
+
     private var readingsJob: Job? = null
 
     init {
@@ -45,9 +47,11 @@ class HomeViewModel @Inject constructor(
                 observeDevicesUseCase(),
                 preferencesManager.preferences
             ) { session, devices, prefs ->
-                prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
-                    ?: session?.let { devices.firstOrNull { it.assignedUserId == it.userId } }
-                    ?: devices.firstOrNull()
+                prefs.primaryDeviceId?.let { id ->
+                    devices.firstOrNull { it.id == id }
+                } ?: session?.let { s ->
+                    devices.firstOrNull { it.assignedUserId == s.userId }
+                } ?: devices.firstOrNull()
             }.collect { device ->
                 _state.update { it.copy(device = device) }
                 device?.let { listenReadings(it.id) }
