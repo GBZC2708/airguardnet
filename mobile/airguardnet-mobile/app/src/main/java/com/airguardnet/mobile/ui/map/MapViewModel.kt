@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -30,9 +31,18 @@ class MapViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            observeHotspotsUseCase().collectLatest { list ->
-                _state.update { it.copy(hotspots = list, isLoading = false, errorMessage = null) }
-            }
+            observeHotspotsUseCase()
+                .catch { throwable ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = throwable.message ?: "No se pudieron cargar los hotspots"
+                        )
+                    }
+                }
+                .collectLatest { list ->
+                    _state.update { it.copy(hotspots = list, isLoading = false, errorMessage = null) }
+                }
         }
     }
 

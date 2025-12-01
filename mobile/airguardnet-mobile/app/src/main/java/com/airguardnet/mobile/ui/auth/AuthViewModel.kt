@@ -56,11 +56,11 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onEmailChanged(value: String) = _state.update {
-        it.copy(email = value, emailError = null)
+        it.copy(email = value, emailError = null, error = null, isInvalidCredentials = false)
     }
 
     fun onPasswordChanged(value: String) = _state.update {
-        it.copy(password = value, passwordError = null)
+        it.copy(password = value, passwordError = null, error = null, isInvalidCredentials = false)
     }
 
     fun togglePasswordVisibility() {
@@ -68,6 +68,7 @@ class AuthViewModel @Inject constructor(
     }
 
     fun login() {
+        _state.update { it.copy(emailError = null, passwordError = null) }
         val email = _state.value.email.trim()
         val pass = _state.value.password
         if (!validate(email, pass)) return
@@ -94,17 +95,19 @@ class AuthViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
-                    val message = when (error) {
-                        is IOException -> "No se pudo conectar al servidor"
-                        is InvalidCredentialsException -> error.message ?: "Credenciales incorrectas"
-                        else -> error.message.takeUnless { it.isNullOrBlank() } ?: "Ocurrió un error inesperado"
+                    val (message, isNetwork) = when (error) {
+                        is IOException -> "No se pudo conectar al servidor. Revisa tu conexión." to true
+                        is InvalidCredentialsException -> "Correo o contraseña incorrectos." to false
+                        else -> "Ocurrió un error inesperado. Intenta nuevamente." to false
                     }
                     _state.update { current ->
                         current.copy(
                             isLoading = false,
                             error = message,
-                            isNetworkError = error is IOException,
-                            isInvalidCredentials = error is InvalidCredentialsException
+                            isNetworkError = isNetwork,
+                            isInvalidCredentials = error is InvalidCredentialsException,
+                            password = if (error is InvalidCredentialsException) "" else current.password,
+                            passwordError = if (error is InvalidCredentialsException) "Correo o contraseña incorrectos." else current.passwordError
                         )
                     }
                 }
@@ -124,6 +127,9 @@ class AuthViewModel @Inject constructor(
 
         if (password.isBlank()) {
             _state.update { it.copy(passwordError = "Ingresa tu contraseña") }
+            isValid = false
+        } else if (password.length < 6) {
+            _state.update { it.copy(passwordError = "La contraseña debe tener al menos 6 caracteres") }
             isValid = false
         }
         return isValid
