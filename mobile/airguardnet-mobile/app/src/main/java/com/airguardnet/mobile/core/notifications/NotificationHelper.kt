@@ -17,7 +17,13 @@ object NotificationHelper {
     const val SESSION_CHANNEL_ID = "session_channel"
     private const val SESSION_NOTIFICATION_ID = 2010
 
-    fun createChannels(context: Context) {
+    fun showSessionNotification(context: Context, role: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) return
+        }
+
+        val manager = NotificationManagerCompat.from(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = NotificationManagerCompat.from(context)
             val sessionChannel = NotificationChannel(

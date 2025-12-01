@@ -50,21 +50,17 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
     val context = LocalContext.current
     var notified by remember { mutableStateOf(false) }
     var permissionRequested by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted && state.isLoggedIn && state.loggedInRole != null) {
-            coroutineScope.launch {
-                delay(300)
-                NotificationHelper.showSessionNotification(
-                    context = context,
-                    role = state.loggedInRole ?: "Sin rol"
-                )
-                onLoggedIn()
-            }
-        } else if (state.isLoggedIn) {
+            NotificationHelper.showSessionNotification(
+                context = context,
+                role = state.loggedInRole ?: "Sin rol"
+            )
+        }
+        if (state.isLoggedIn) {
             onLoggedIn()
         }
     }
@@ -72,7 +68,6 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
     LaunchedEffect(state.isLoggedIn, state.loggedInRole) {
         if (state.isLoggedIn && state.loggedInRole != null && !notified) {
             notified = true
-            val role = state.loggedInRole ?: "Sin rol"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val hasPermission =
                     ContextCompat.checkSelfPermission(
@@ -80,10 +75,9 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                         Manifest.permission.POST_NOTIFICATIONS
                     ) == PackageManager.PERMISSION_GRANTED
                 if (hasPermission) {
-                    delay(300)
                     NotificationHelper.showSessionNotification(
                         context = context,
-                        role = role
+                        role = state.loggedInRole ?: "Sin rol"
                     )
                     onLoggedIn()
                 } else if (!permissionRequested) {
@@ -93,10 +87,9 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                     onLoggedIn()
                 }
             } else {
-                delay(300)
                 NotificationHelper.showSessionNotification(
                     context = context,
-                    role = role
+                    role = state.loggedInRole ?: "Sin rol"
                 )
                 onLoggedIn()
             }
