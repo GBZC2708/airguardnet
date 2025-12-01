@@ -15,13 +15,13 @@ import com.airguardnet.mobile.domain.usecase.ObserveAlertsUseCase
 import com.airguardnet.mobile.domain.usecase.ObserveDevicesUseCase
 import com.airguardnet.mobile.domain.usecase.ObserveReadingsUseCase
 import com.airguardnet.mobile.domain.usecase.ObserveSessionUseCase
-import com.airguardnet.mobile.domain.usecase.RefreshDevicesUseCase
 import com.airguardnet.mobile.domain.usecase.RefreshAlertsUseCase
+import com.airguardnet.mobile.domain.usecase.RefreshDevicesUseCase
 import com.airguardnet.mobile.domain.usecase.RefreshReadingsUseCase
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -99,5 +99,6 @@ interface WidgetEntryPoint {
     fun preferences(): UserPreferencesManager
 }
 
-private fun Context.widgetEntryPoint(): WidgetEntryPoint =
+// OJO: ya no es private, así ResumenWidget también lo puede usar
+fun Context.widgetEntryPoint(): WidgetEntryPoint =
     EntryPointAccessors.fromApplication(this, WidgetEntryPoint::class.java)

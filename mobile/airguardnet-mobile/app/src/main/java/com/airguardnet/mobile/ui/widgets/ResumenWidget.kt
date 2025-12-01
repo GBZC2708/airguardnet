@@ -9,6 +9,7 @@ import android.widget.RemoteViews
 import androidx.compose.ui.graphics.toArgb
 import com.airguardnet.mobile.MainActivity
 import com.airguardnet.mobile.R
+import com.airguardnet.mobile.core.utils.qualityPercent
 import com.airguardnet.mobile.core.utils.resolveRiskBand
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,14 +64,21 @@ class ResumenWidget : AppWidgetProvider() {
             entryPoint.refreshAlerts().invoke(device.id)
             val reading = entryPoint.readings().invoke(device.id).firstOrNull()?.firstOrNull()
             val alerts = entryPoint.alerts().invoke(device.id).firstOrNull().orEmpty()
-            val critical24h = alerts.count { it.severity.equals("CRITICAL", true) && it.createdAt > System.currentTimeMillis() - 86_400_000 }
+            val critical24h = alerts.count {
+                it.severity.equals("CRITICAL", true) &&
+                        it.createdAt > System.currentTimeMillis() - 86_400_000
+            }
             val band = resolveRiskBand(reading?.pm25)
+            val quality = qualityPercent(reading?.pm25)
 
             withContext(Dispatchers.Main) {
-                views.setTextViewText(R.id.widgetAlerts, "${session.name} | PM2.5: ${reading?.pm25 ?: "--"} µg/m³")
+                views.setTextViewText(
+                    R.id.widgetAlerts,
+                    "${session.name} | PM2.5: ${reading?.pm25 ?: "--"} µg/m³"
+                )
                 views.setTextViewText(
                     R.id.widgetTiempo,
-                    "Calidad: ${reading?.airQualityPercent ?: "--"}% · Críticas 24h: $critical24h"
+                    "Calidad: ${if (reading == null) "--" else quality.toString()}% · Críticas 24h: $critical24h"
                 )
                 views.setInt(R.id.widgetRoot, "setBackgroundColor", band.color.toArgb())
                 appWidgetManager.updateAppWidget(widgetId, views)
