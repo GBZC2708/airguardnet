@@ -2,6 +2,9 @@ package com.airguardnet.mobile.ui.map
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -17,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,22 +52,22 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private enum class PermissionState { UNKNOWN, GRANTED, DENIED, PERMANENTLY_DENIED }
+
 @SuppressLint("MissingPermission")
 @Composable
 fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
-    val hotspots by viewModel.hotspots.collectAsState()
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    var userLocation by remember { mutableStateOf<LatLng?>(null) }
-    var selectedHotspot by remember { mutableStateOf<Hotspot?>(null) }
-    var hasLocationPermission by remember { mutableStateOf(false) }
-    var permissionRequested by remember { mutableStateOf(false) }
     val fusedClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-        permissionRequested = true
-        hasLocationPermission = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            granted[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (hasLocationPermission) {
-            requestLocation(fusedClient) { userLocation = it }
+    var permissionState by remember { mutableStateOf(PermissionState.UNKNOWN) }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val granted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true || result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        permissionState = if (granted) PermissionState.GRANTED else PermissionState.DENIED
+        if (granted) {
+            requestLocation(fusedClient) { latLng ->
+                viewModel.setUserLocation(latLng.latitude, latLng.longitude)
+            }
         }
     }
 
@@ -73,113 +78,131 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(factory = { context ->
-            MapView(context).apply {
+        AndroidView(factory = { ctx ->
+            MapView(ctx).apply {
                 onCreate(null)
                 onResume()
                 getMapAsync { map ->
                     map.uiSettings.isZoomControlsEnabled = true
                     map.uiSettings.isMyLocationButtonEnabled = false
-                    map.isMyLocationEnabled = hasLocationPermission
-                    val focusLocation = userLocation ?: hotspots.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
-                    hotspots.forEach { hotspot ->
-                        val color = if (hotspot.severity.uppercase() == "CRITICAL") BitmapDescriptorFactory.HUE_RED else BitmapDescriptorFactory.HUE_ORANGE
-                        map.addMarker(
-                            MarkerOptions()
-                                .position(LatLng(hotspot.latitude, hotspot.longitude))
-                                .title("PM2.5 ${hotspot.pm25}")
-                                .icon(BitmapDescriptorFactory.defaultMarker(color))
-                        )
+                    map.isMyLocationEnabled = permissionState == PermissionState.GRANTED
+                    val focusLocation = when {
+                        state.userLatitude != null && state.userLongitude != null -> LatLng(state.userLatitude, state.userLongitude)
+                        state.hotspots.isNotEmpty() -> LatLng(state.hotspots.first().latitude, state.hotspots.first().longitude)
+                        else -> null
                     }
-                    userLocation?.let {
-                        map.addMarker(
-                            MarkerOptions()
-                                .position(it)
-                                .title("Mi ubicación")
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                        )
+                    drawHotspots(state.hotspots, map)
+                    state.userLatitude?.let { lat ->
+                        state.userLongitude?.let { lng ->
+                            map.addMarker(
+                                MarkerOptions()
+                                    .position(LatLng(lat, lng))
+                                    .title("Mi ubicación")
+                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                            )
+                        }
                     }
                     map.setOnMarkerClickListener { marker ->
-                        val hotspot = hotspots.firstOrNull { it.latitude == marker.position.latitude && it.longitude == marker.position.longitude }
-                        selectedHotspot = hotspot
+                        val hotspot = state.hotspots.firstOrNull { it.latitude == marker.position.latitude && it.longitude == marker.position.longitude }
+                        viewModel.selectHotspot(hotspot)
                         false
                     }
-                    focusLocation?.let {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 13f))
-                    }
+                    focusLocation?.let { map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 13f)) }
                 }
             }
         }, update = { mapView ->
             mapView.getMapAsync { map ->
                 map.clear()
-                map.isMyLocationEnabled = hasLocationPermission
-                val focusLocation = userLocation ?: hotspots.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
-                hotspots.forEach { hotspot ->
-                    val color = if (hotspot.severity.uppercase() == "CRITICAL") BitmapDescriptorFactory.HUE_RED else BitmapDescriptorFactory.HUE_ORANGE
-                    map.addMarker(
-                        MarkerOptions().position(LatLng(hotspot.latitude, hotspot.longitude)).title("PM2.5 ${hotspot.pm25}")
-                            .icon(BitmapDescriptorFactory.defaultMarker(color))
-                    )
-                }
-                userLocation?.let {
-                    map.addMarker(
-                        MarkerOptions().position(it).title("Mi ubicación")
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                    )
+                map.isMyLocationEnabled = permissionState == PermissionState.GRANTED
+                drawHotspots(state.hotspots, map)
+                state.userLatitude?.let { lat ->
+                    state.userLongitude?.let { lng ->
+                        map.addMarker(
+                            MarkerOptions()
+                                .position(LatLng(lat, lng))
+                                .title("Mi ubicación")
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                        )
+                        if (permissionState == PermissionState.GRANTED) {
+                            map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 13f))
+                        }
+                    }
                 }
                 map.setOnMarkerClickListener { marker ->
-                    val hotspot = hotspots.firstOrNull { it.latitude == marker.position.latitude && it.longitude == marker.position.longitude }
-                    selectedHotspot = hotspot
+                    val hotspot = state.hotspots.firstOrNull { it.latitude == marker.position.latitude && it.longitude == marker.position.longitude }
+                    viewModel.selectHotspot(hotspot)
                     false
                 }
-                focusLocation?.let { map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 13f)) }
             }
         })
 
-        if (!hasLocationPermission) {
+        when {
+            state.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            state.hotspots.isEmpty() -> {
+                Card(
+                    modifier = Modifier.align(Alignment.TopCenter).padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+                ) {
+                    Text("No hay hotspots configurados", modifier = Modifier.padding(12.dp))
+                }
+            }
+        }
+
+        if (permissionState != PermissionState.GRANTED) {
             Card(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp),
+                modifier = Modifier.align(Alignment.TopCenter).padding(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
             ) {
+                val message = when (permissionState) {
+                    PermissionState.UNKNOWN -> "Solicitando permisos de ubicación..."
+                    PermissionState.DENIED -> "Habilita la ubicación para centrar el mapa en tu posición."
+                    PermissionState.PERMANENTLY_DENIED -> "Habilita permisos en Ajustes para ver tu ubicación."
+                    PermissionState.GRANTED -> ""
+                }
                 Text(
-                    text = if (permissionRequested) {
-                        "Habilita la ubicación para centrar el mapa en tu posición."
-                    } else {
-                        "Solicitando permisos de ubicación..."
-                    },
+                    text = message,
                     modifier = Modifier.padding(12.dp),
                     style = MaterialTheme.typography.bodyMedium
                 )
+                if (permissionState == PermissionState.DENIED) {
+                    Text(
+                        text = "Si no deseas volver a ver este mensaje, concede el permiso.",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                if (permissionState == PermissionState.PERMANENTLY_DENIED) {
+                    ButtonToSettings()
+                }
             }
         }
 
         FloatingActionButton(
             onClick = {
-                if (hasLocationPermission) {
-                    requestLocation(fusedClient) { userLocation = it }
+                if (permissionState == PermissionState.GRANTED) {
+                    requestLocation(fusedClient) { latLng ->
+                        viewModel.setUserLocation(latLng.latitude, latLng.longitude)
+                    }
                 } else {
                     permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 }
             },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
             Icon(Icons.Rounded.MyLocation, contentDescription = "Mi ubicación")
         }
 
-        selectedHotspot?.let { hotspot ->
+        state.selectedHotspot?.let { hotspot ->
             Card(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "Hotspot", style = MaterialTheme.typography.titleMedium)
+                        Text(text = hotspot.severity, style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.size(8.dp))
                         val badgeColor = when (hotspot.severity.uppercase()) {
                             "CRITICAL" -> MaterialTheme.colorScheme.error
@@ -206,10 +229,36 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
     }
 }
 
+@Composable
+private fun ButtonToSettings() {
+    val context = LocalContext.current
+    androidx.compose.material3.Button(onClick = {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Text("Abrir ajustes")
+    }
+}
+
 @SuppressLint("MissingPermission")
 private fun requestLocation(client: com.google.android.gms.location.FusedLocationProviderClient, onLocation: (LatLng) -> Unit) {
     client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
         .addOnSuccessListener { loc ->
             loc?.let { onLocation(LatLng(it.latitude, it.longitude)) }
         }
+}
+
+private fun drawHotspots(hotspots: List<Hotspot>, map: com.google.android.gms.maps.GoogleMap) {
+    hotspots.forEach { hotspot ->
+        val color = if (hotspot.severity.uppercase() == "CRITICAL") BitmapDescriptorFactory.HUE_RED else BitmapDescriptorFactory.HUE_ORANGE
+        map.addMarker(
+            MarkerOptions()
+                .position(LatLng(hotspot.latitude, hotspot.longitude))
+                .title("PM2.5 ${hotspot.pm25}")
+                .icon(BitmapDescriptorFactory.defaultMarker(color))
+        )
+    }
 }

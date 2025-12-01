@@ -6,13 +6,45 @@ import com.airguardnet.mobile.domain.model.Hotspot
 import com.airguardnet.mobile.domain.usecase.ObserveHotspotsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class MapUiState(
+    val hotspots: List<Hotspot> = emptyList(),
+    val userLatitude: Double? = null,
+    val userLongitude: Double? = null,
+    val selectedHotspot: Hotspot? = null,
+    val isLoading: Boolean = true,
+    val errorMessage: String? = null
+)
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
     observeHotspotsUseCase: ObserveHotspotsUseCase
 ) : ViewModel() {
-    val hotspots: StateFlow<List<Hotspot>> = observeHotspotsUseCase().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _state = MutableStateFlow(MapUiState())
+    val state: StateFlow<MapUiState> = _state
+
+    init {
+        viewModelScope.launch {
+            observeHotspotsUseCase().collectLatest { list ->
+                _state.update { it.copy(hotspots = list, isLoading = false, errorMessage = null) }
+            }
+        }
+    }
+
+    fun setUserLocation(lat: Double, lng: Double) {
+        _state.update { it.copy(userLatitude = lat, userLongitude = lng) }
+    }
+
+    fun selectHotspot(hotspot: Hotspot?) {
+        _state.update { it.copy(selectedHotspot = hotspot) }
+    }
+
+    fun setError(message: String) {
+        _state.update { it.copy(errorMessage = message, isLoading = false) }
+    }
 }
