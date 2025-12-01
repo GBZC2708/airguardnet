@@ -111,10 +111,12 @@ class HistoryViewModel @Inject constructor(
 
     private fun applyFilter(filter: HistoryFilter) {
         val now = System.currentTimeMillis()
+        val startOfToday = now - (now % (24 * 60 * 60 * 1000L))
+        val sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000L
         val filtered = cachedReadings.filter { reading ->
             when (filter) {
-                HistoryFilter.TODAY -> isSameDay(reading.recordedAt, now)
-                HistoryFilter.LAST_7_DAYS -> reading.recordedAt >= now - 7 * 24 * 60 * 60 * 1000L
+                HistoryFilter.TODAY -> reading.recordedAt in startOfToday..now
+                HistoryFilter.LAST_7_DAYS -> reading.recordedAt >= sevenDaysAgo
                 HistoryFilter.ALL -> true
             }
         }.map { it.toUi() }
@@ -144,11 +146,6 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    private fun isSameDay(timestamp: Long, now: Long): Boolean {
-        val dayMillis = 24 * 60 * 60 * 1000L
-        return timestamp / dayMillis == now / dayMillis
-    }
-
     private fun Reading.toUi(): ReadingUi {
         val band = resolveRiskBand(pm25)
         return ReadingUi(
@@ -164,3 +161,16 @@ class HistoryViewModel @Inject constructor(
         )
     }
 }
+
+// PRUEBAS MANUALES (AirGuardNet readings)
+// 1) Iniciar backend + DB con datos de ejemplo y dispositivo AG-ESP32-0001 asignado al usuario operador.
+// 2) Iniciar app, loguearse como oscar.operador@airguardnet.local.
+// 3) Ir a Home -> "Tiempo real conectado (backend)".
+//    - Pulsar "Actualizar ahora".
+//    - Ver que aparece una lectura real con PM2.5, PM10 y batería.
+// 4) Ir a Historial:
+//    - Ver que "Todo" muestra un listado de lecturas.
+//    - Cambiar a "Hoy" y "Últimos 7 días" y confirmar que el filtro funciona.
+// 5) Ir a Perfil:
+//    - Ver que "Última lectura" muestra la última lectura (no "Sin lecturas").
+// 6) Enviar una nueva lectura desde el ESP32 y repetir pasos 3-5 para ver datos actualizados.

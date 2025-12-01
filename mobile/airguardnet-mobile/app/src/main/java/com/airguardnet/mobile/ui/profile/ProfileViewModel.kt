@@ -138,9 +138,11 @@ class ProfileViewModel @Inject constructor(
             _state.update { it.copy(criticalAlertsLast24h = last24h) }
         }
         val readingsResponse = runCatching { deviceRepository.getDeviceReadings(deviceId) }.getOrNull()
-        val last = readingsResponse?.data?.firstOrNull()
+        val last = readingsResponse?.data?.map { it.toDomain() }?.maxByOrNull { reading -> reading.recordedAt }
         val summary = last?.pm25?.let { value ->
-            "PM2.5: $value µg/m³, ${formatter.format(Date(last.recordedAt))}"
+            val timestamp = last.recordedAt.takeIf { it > 0 }
+            val formatted = timestamp?.let { formatter.format(Date(it)) }
+            formatted?.let { "PM2.5: $value µg/m³, $it" }
         } ?: "Sin lecturas"
         _state.update { it.copy(lastReadingSummary = summary) }
     }

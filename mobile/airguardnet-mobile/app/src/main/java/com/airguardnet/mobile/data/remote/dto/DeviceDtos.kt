@@ -18,7 +18,7 @@ data class DeviceDto(
 data class ReadingDto(
     @SerialName("id") val id: Long,
     @SerialName("deviceId") val deviceId: Long,
-    @SerialName("recordedAt") val recordedAt: Long,
+    @SerialName("recordedAt") val recordedAt: String? = null,
     @SerialName("pm1") val pm1: Double? = null,
     @SerialName("pm25") val pm25: Double? = null,
     @SerialName("pm10") val pm10: Double? = null,
