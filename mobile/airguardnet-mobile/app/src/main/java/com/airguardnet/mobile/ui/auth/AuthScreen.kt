@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -29,27 +31,32 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.airguardnet.mobile.R
 import com.airguardnet.mobile.core.notifications.NotificationHelper
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
+/**
+ * Gestiona el flujo de login y la solicitud de permiso de notificaciones.
+ * Siempre navega al Home aunque el permiso sea rechazado, pero intenta mostrar
+ * la notificación local una sola vez.
+ */
 @Composable
 fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     var notified by remember { mutableStateOf(false) }
     var permissionRequested by remember { mutableStateOf(false) }
+    var notificationDenied by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -59,6 +66,8 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                 context = context,
                 role = state.loggedInRole ?: "Sin rol"
             )
+        } else if (!granted) {
+            notificationDenied = true
         }
         if (state.isLoggedIn) {
             onLoggedIn()
@@ -82,6 +91,7 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                     onLoggedIn()
                 } else if (!permissionRequested) {
                     permissionRequested = true
+                    notificationDenied = false
                     permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
                     onLoggedIn()
@@ -103,7 +113,19 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = "Logo AirGuardNet",
+            modifier = Modifier.size(112.dp)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Text(text = "AirGuardNet", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = "Monitorea y protege tu aire en tiempo real",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        )
 
         OutlinedTextField(
             value = state.email,
@@ -111,7 +133,7 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-            label = { Text("Email") },
+            label = { Text("Correo electrónico") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             isError = state.emailError != null,
@@ -137,7 +159,7 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                 }
             },
             singleLine = true,
-            isError = state.passwordError != null,
+            isError = state.passwordError != null || state.isInvalidCredentials,
             supportingText = {
                 state.passwordError?.let {
                     Text(text = it, color = MaterialTheme.colorScheme.error)
@@ -155,6 +177,17 @@ fun AuthScreen(onLoggedIn: () -> Unit, viewModel: AuthViewModel = hiltViewModel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
+            )
+        }
+
+        if (notificationDenied && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Text(
+                text = "Activa las notificaciones si deseas recibir el aviso de sesión.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
             )
         }
 

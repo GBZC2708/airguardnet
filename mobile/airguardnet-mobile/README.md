@@ -51,3 +51,8 @@ Aplicación Android (Jetpack Compose + MVVM + Hilt + WorkManager + DataStore + W
 ## Comandos útiles
 - Compilar en CLI: `./gradlew :app:assembleDebug`
 - Limpiar datos de la app (si cambiaste de IP): desinstala la app o borra datos para resetear sesión y preferencias.
+
+## Novedades Fase 4 (Mapa + Notificaciones + Login)
+- **Notificación de inicio de sesión:** inicia sesión con cualquier cuenta de prueba, acepta el permiso de notificaciones (Android 13+) y verifica el aviso "Has iniciado sesión" que abre Home al tocarlo.
+- **Mapa con ubicación real:** concede permisos de ubicación, abre la pestaña Mapa y pulsa el FAB de ubicación. Verás el marcador "Mi ubicación" y la cámara centrada. Si no hay hotspots, solo verás el banner y el mapa vacío.
+- **Login mejorado:** pantalla con logo, textos claros y validaciones de correo/contraseña (mínimo 6 caracteres). Mensajes diferenciados para red, credenciales y errores inesperados.

@@ -54,6 +54,9 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = { viewModel.refresh() }) { Text("Reintentar") }
                     }
+                    state.device == null -> {
+                        Text("No tienes un dispositivo asignado. Revisa tu Perfil o consulta con el administrador.")
+                    }
                     state.isEmpty -> {
                         Text("Aún no hay lecturas para tu dispositivo")
                     }
