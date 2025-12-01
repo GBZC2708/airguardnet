@@ -16,6 +16,7 @@ import com.airguardnet.mobile.domain.usecase.RefreshAlertsUseCase
 import com.airguardnet.mobile.domain.usecase.RefreshDevicesUseCase
 import com.airguardnet.mobile.domain.usecase.RefreshReadingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -109,7 +110,10 @@ class ProfileViewModel @Inject constructor(
     private fun subscribeDeviceData(deviceId: Long) {
         viewModelScope.launch {
             observeAlertsUseCase(deviceId).collect { alerts ->
-                val last24h = alerts.count { it.severity.equals("CRITICAL", true) && it.createdAt >= System.currentTimeMillis() - 24 * 60 * 60 * 1000 }
+                val last24h = alerts.count { alert ->
+                    alert.severity.equals("CRITICAL", true) &&
+                        (alert.createdAt ?: 0L) >= System.currentTimeMillis() - 24 * 60 * 60 * 1000L
+                }
                 _state.update { it.copy(criticalAlertsLast24h = last24h) }
             }
         }
@@ -127,7 +131,10 @@ class ProfileViewModel @Inject constructor(
     private suspend fun fetchLatestSummaries(deviceId: Long) {
         val alertsResponse = runCatching { deviceRepository.getDeviceAlerts(deviceId) }.getOrNull()
         alertsResponse?.data?.let { alerts ->
-            val last24h = alerts.count { it.severity.equals("CRITICAL", true) && it.createdAt >= System.currentTimeMillis() - 24 * 60 * 60 * 1000 }
+            val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
+            val last24h = alerts.count { dto ->
+                dto.severity.equals("CRITICAL", true) && dto.createdAt.toEpochMillisOrNull()?.let { it >= cutoff } == true
+            }
             _state.update { it.copy(criticalAlertsLast24h = last24h) }
         }
         val readingsResponse = runCatching { deviceRepository.getDeviceReadings(deviceId) }.getOrNull()
@@ -165,8 +172,18 @@ class ProfileViewModel @Inject constructor(
             deviceUid = deviceUid,
             name = name,
             status = status,
-            lastCommunicationAt = lastCommunicationAt,
+            lastCommunicationAt = lastCommunicationAt.toIsoInstantOrNull(),
             lastBatteryLevel = lastBatteryLevel,
             assignedUserId = assignedUserId
         )
+
+    private fun String?.toEpochMillisOrNull(): Long? {
+        if (this.isNullOrBlank()) return null
+        return runCatching { Instant.parse(this).toEpochMilli() }.getOrNull()
+    }
+
+    private fun Long?.toIsoInstantOrNull(): String? {
+        if (this == null) return null
+        return Instant.ofEpochMilli(this).toString()
+    }
 }

@@ -40,11 +40,11 @@ class AlertPollingWorker @AssistedInject constructor(
         val alerts = deviceRepository.getCachedAlerts().filter { it.deviceId == device.id }
         val lastNotified = prefs?.lastNotifiedCriticalAlertAt ?: 0L
         val newCriticals = alerts.filter { alert ->
-            alert.severity.equals("CRITICAL", true) && alert.createdAt > lastNotified
+            alert.severity.equals("CRITICAL", true) && (alert.createdAt ?: 0L) > lastNotified
         }
 
         if (newCriticals.isNotEmpty()) {
-            val latestTimestamp = newCriticals.maxOf { it.createdAt }
+            val latestTimestamp = newCriticals.maxOf { it.createdAt ?: 0L }
             val preview = newCriticals.joinToString(limit = 3, separator = " • ") { it.message }
             NotificationHelper.showCriticalAlertNotification(
                 context = applicationContext,

@@ -66,7 +66,7 @@ class ResumenWidget : AppWidgetProvider() {
             val alerts = entryPoint.alerts().invoke(device.id).firstOrNull().orEmpty()
             val critical24h = alerts.count {
                 it.severity.equals("CRITICAL", true) &&
-                        it.createdAt > System.currentTimeMillis() - 86_400_000
+                        (it.createdAt ?: 0L) > System.currentTimeMillis() - 86_400_000
             }
             val band = resolveRiskBand(reading?.pm25)
             val quality = qualityPercent(reading?.pm25)
