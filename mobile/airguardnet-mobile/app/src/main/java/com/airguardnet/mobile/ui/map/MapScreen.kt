@@ -86,11 +86,18 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                     map.uiSettings.isZoomControlsEnabled = true
                     map.uiSettings.isMyLocationButtonEnabled = false
                     map.isMyLocationEnabled = permissionState == PermissionState.GRANTED
+                    val userLat = state.userLatitude
+                    val userLng = state.userLongitude
+
                     val focusLocation = when {
-                        state.userLatitude != null && state.userLongitude != null -> LatLng(state.userLatitude, state.userLongitude)
-                        state.hotspots.isNotEmpty() -> LatLng(state.hotspots.first().latitude, state.hotspots.first().longitude)
+                        userLat != null && userLng != null -> LatLng(userLat, userLng)
+                        state.hotspots.isNotEmpty() -> {
+                            val first = state.hotspots.first()
+                            LatLng(first.latitude, first.longitude)
+                        }
                         else -> null
                     }
+
                     drawHotspots(state.hotspots, map)
                     state.userLatitude?.let { lat ->
                         state.userLongitude?.let { lng ->
