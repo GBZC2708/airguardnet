@@ -32,26 +32,41 @@ import com.airguardnet.mobile.ui.navigation.bottomNavItems
 import com.airguardnet.mobile.ui.navigation.RootViewModel
 import com.airguardnet.mobile.ui.profile.ProfileScreen
 import com.airguardnet.mobile.ui.realtimedemo.RealtimeDemoScreen
+import com.airguardnet.mobile.ui.realtimelive.RealtimeLiveScreen
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.navigation.navArgument
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { AirGuardNetRoot() }
+        val startTab = intent?.getStringExtra("targetTab")
+        val alertFilter = intent?.getStringExtra("alertFilter")
+        setContent { AirGuardNetRoot(startTab = startTab, alertFilter = alertFilter) }
     }
 }
 
 @Composable
-fun AirGuardNetRoot(viewModel: RootViewModel = androidx.hilt.navigation.compose.hiltViewModel()) {
+fun AirGuardNetRoot(
+    startTab: String? = null,
+    alertFilter: String? = null,
+    viewModel: RootViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val currentRouteBase = currentRoute?.substringBefore("?")
     val sessionState = viewModel.session.collectAsState()
     val session: UserSession? = sessionState.value
     LaunchedEffect(session) {
         if (session != null) {
-            navController.navigate(NavRoutes.Home.route) {
+            val target = when (startTab) {
+                "alerts" -> NavRoutes.Alerts.withOptionalFilter(alertFilter ?: "CRITICAL")
+                "history" -> NavRoutes.History.route
+                "map" -> NavRoutes.Map.route
+                else -> NavRoutes.Home.route
+            }
+            navController.navigate(target) {
                 popUpTo(NavRoutes.Login.route) { inclusive = true }
                 launchSingleTop = true
             }
@@ -69,7 +84,7 @@ fun AirGuardNetRoot(viewModel: RootViewModel = androidx.hilt.navigation.compose.
                     NavigationBar {
                         bottomNavItems.forEach { item ->
                             NavigationBarItem(
-                                selected = currentRoute == item.route.route,
+                                selected = currentRouteBase == item.route.route,
                                 onClick = {
                                     navController.navigate(item.route.route) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -90,14 +105,21 @@ fun AirGuardNetRoot(viewModel: RootViewModel = androidx.hilt.navigation.compose.
                 composable(NavRoutes.Home.route) {
                     HomeScreen(
                         onHistory = { navController.navigate(NavRoutes.History.route) },
-                        onRealtimeDemo = { navController.navigate(NavRoutes.RealtimeDemo.route) }
+                        onRealtimeDemo = { navController.navigate(NavRoutes.RealtimeDemo.route) },
+                        onRealtimeLive = { navController.navigate(NavRoutes.RealtimeLive.route) }
                     )
                 }
                 composable(NavRoutes.History.route) { HistoryScreen() }
-                composable(NavRoutes.Alerts.route) { AlertsScreen() }
+                composable(
+                    route = NavRoutes.Alerts.route + "?filter={filter}",
+                    arguments = listOf(navArgument("filter") { nullable = true; defaultValue = null })
+                ) { backStackEntry ->
+                    AlertsScreen(defaultFilter = backStackEntry.arguments?.getString("filter"))
+                }
                 composable(NavRoutes.Map.route) { MapScreen() }
                 composable(NavRoutes.Profile.route) { ProfileScreen(onLoggedOut = { navController.navigate(NavRoutes.Login.route) { popUpTo(0) { inclusive = true } } }) }
                 composable(NavRoutes.RealtimeDemo.route) { RealtimeDemoScreen() }
+                composable(NavRoutes.RealtimeLive.route) { RealtimeLiveScreen(onBackToDemo = { navController.navigate(NavRoutes.RealtimeDemo.route) { launchSingleTop = true } }) }
             }
         }
     }

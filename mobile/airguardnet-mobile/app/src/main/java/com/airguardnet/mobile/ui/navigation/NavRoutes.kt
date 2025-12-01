@@ -7,5 +7,10 @@ enum class NavRoutes(val route: String) {
     Alerts("alerts"),
     Map("map"),
     Profile("profile"),
-    RealtimeDemo("realtime_demo")
+    RealtimeDemo("realtime_demo"),
+    RealtimeLive("realtime_live");
+
+    fun withOptionalFilter(filter: String?): String {
+        return if (filter.isNullOrBlank()) route else "$route?filter=$filter"
+    }
 }
