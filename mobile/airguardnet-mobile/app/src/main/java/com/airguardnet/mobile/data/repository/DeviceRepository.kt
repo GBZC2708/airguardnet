@@ -19,8 +19,9 @@ class DeviceRepository(
      */
     suspend fun getAssignedDeviceForUser(userId: Long): DeviceDto? {
         val response = api.getDevices()
-        if (!response.success || response.data.isEmpty()) return null
-        return response.data.firstOrNull { it.assignedUserId == userId }
+        val devices: List<DeviceDto> = response.data ?: return null
+        if (!response.success || devices.isEmpty()) return null
+        return devices.firstOrNull { it.assignedUserId == userId }
     }
 
     suspend fun getDeviceReadings(deviceId: Long): ApiResponse<List<ReadingDto>> =

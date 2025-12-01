@@ -122,16 +122,23 @@ class HistoryViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val deviceId = _state.value.deviceId ?: run {
-            val userId = currentUserId
-            val assigned = userId?.let { runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull() }
-            assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
-            assigned?.toDomain()?.id
-        } ?: return
         viewModelScope.launch {
+            val deviceId = _state.value.deviceId ?: run {
+                val userId = currentUserId
+                val assigned = userId?.let {
+                    runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull()
+                }
+                assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
+                assigned?.toDomain()?.id
+            } ?: return@launch
+
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching { refreshReadingsUseCase(deviceId) }.onFailure { error ->
-                _state.update { state -> state.copy(errorMessage = error.message ?: "No se pudo cargar el historial") }
+                _state.update { state ->
+                    state.copy(
+                        errorMessage = error.message ?: "No se pudo cargar el historial"
+                    )
+                }
             }
             _state.update { it.copy(isLoading = false) }
         }

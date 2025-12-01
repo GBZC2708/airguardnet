@@ -130,16 +130,23 @@ class AlertsViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val deviceId = _state.value.deviceId ?: run {
-            val userId = currentUserId
-            val assigned = userId?.let { runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull() }
-            assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
-            assigned?.toDomain()?.id
-        } ?: return
         viewModelScope.launch {
+            val deviceId = _state.value.deviceId ?: run {
+                val userId = currentUserId
+                val assigned = userId?.let {
+                    runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull()
+                }
+                assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
+                assigned?.toDomain()?.id
+            } ?: return@launch
+
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching { refreshAlertsUseCase(deviceId) }.onFailure { error ->
-                _state.update { state -> state.copy(errorMessage = error.message ?: "No se pudieron cargar las alertas") }
+                _state.update { state ->
+                    state.copy(
+                        errorMessage = error.message ?: "No se pudieron cargar las alertas"
+                    )
+                }
             }
             _state.update { it.copy(isLoading = false) }
         }
