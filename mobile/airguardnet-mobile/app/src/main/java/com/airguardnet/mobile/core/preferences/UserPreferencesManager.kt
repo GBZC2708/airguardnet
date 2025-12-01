@@ -18,7 +18,8 @@ data class UserPreferences(
     val criticalNotificationsEnabled: Boolean = true,
     val primaryDeviceId: Long? = null,
     val lastEmail: String? = null,
-    val lastNotifiedCriticalAlertAt: Long? = null
+    val lastNotifiedCriticalAlertAt: Long? = null,
+    val userId: Long? = null
 )
 
 @Singleton
@@ -28,13 +29,15 @@ class UserPreferencesManager @Inject constructor(@ApplicationContext context: Co
     private val primaryDeviceKey = longPreferencesKey("primary_device")
     private val lastEmailKey = stringPreferencesKey("last_email")
     private val lastCriticalAlertAtKey = longPreferencesKey("last_critical_alert_at")
+    private val userIdKey = longPreferencesKey("user_id")
 
     val preferences: Flow<UserPreferences> = store.data.map { prefs ->
         UserPreferences(
             criticalNotificationsEnabled = prefs[criticalKey] ?: true,
             primaryDeviceId = prefs[primaryDeviceKey]?.takeIf { it > 0 },
             lastEmail = prefs[lastEmailKey],
-            lastNotifiedCriticalAlertAt = prefs[lastCriticalAlertAtKey]?.takeIf { it > 0 }
+            lastNotifiedCriticalAlertAt = prefs[lastCriticalAlertAtKey]?.takeIf { it > 0 },
+            userId = prefs[userIdKey]?.takeIf { it > 0 }
         )
     }
 
@@ -70,6 +73,16 @@ class UserPreferencesManager @Inject constructor(@ApplicationContext context: Co
                 prefs[lastCriticalAlertAtKey] = timestamp
             } else {
                 prefs.remove(lastCriticalAlertAtKey)
+            }
+        }
+    }
+
+    suspend fun setUserId(id: Long?) {
+        store.edit { prefs ->
+            if (id != null && id > 0) {
+                prefs[userIdKey] = id
+            } else {
+                prefs.remove(userIdKey)
             }
         }
     }

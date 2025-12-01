@@ -6,6 +6,7 @@ import com.airguardnet.mobile.data.mapper.toEntity
 import com.airguardnet.mobile.data.remote.AirGuardNetApiService
 import com.airguardnet.mobile.data.remote.dto.LoginRequestDto
 import com.airguardnet.mobile.core.network.InvalidCredentialsException
+import com.airguardnet.mobile.core.preferences.UserPreferencesManager
 import com.airguardnet.mobile.domain.model.UserSession
 import com.airguardnet.mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +19,8 @@ import retrofit2.HttpException
 
 class AuthRepositoryImpl(
     private val api: AirGuardNetApiService,
-    private val userSessionDao: UserSessionDao
+    private val userSessionDao: UserSessionDao,
+    private val preferencesManager: UserPreferencesManager
 ) : AuthRepository {
     override val session: Flow<UserSession?> = userSessionDao.observeSession().map { it?.toDomain() }
 
@@ -30,6 +32,7 @@ class AuthRepositoryImpl(
                 val entity = data.toEntity()
                 userSessionDao.clear()
                 userSessionDao.insert(entity)
+                preferencesManager.setUserId(entity.userId)
                 Result.success(entity.toDomain())
             } else {
                 Result.failure(InvalidCredentialsException(response.message ?: "Credenciales incorrectas"))
@@ -60,5 +63,6 @@ class AuthRepositoryImpl(
 
     override suspend fun logout() {
         userSessionDao.clear()
+        preferencesManager.setUserId(null)
     }
 }

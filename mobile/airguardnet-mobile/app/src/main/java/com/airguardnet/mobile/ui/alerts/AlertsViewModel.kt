@@ -3,6 +3,8 @@ package com.airguardnet.mobile.ui.alerts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.airguardnet.mobile.core.preferences.UserPreferencesManager
+import com.airguardnet.mobile.data.mapper.toDomain
+import com.airguardnet.mobile.data.repository.DeviceRepository
 import com.airguardnet.mobile.domain.model.Alert
 import com.airguardnet.mobile.domain.usecase.ObserveAlertsUseCase
 import com.airguardnet.mobile.domain.usecase.ObserveDevicesUseCase
@@ -53,13 +55,16 @@ class AlertsViewModel @Inject constructor(
     observeDevicesUseCase: ObserveDevicesUseCase,
     private val observeAlertsUseCase: ObserveAlertsUseCase,
     private val refreshAlertsUseCase: RefreshAlertsUseCase,
-    preferencesManager: UserPreferencesManager
+    private val preferencesManager: UserPreferencesManager,
+    private val deviceRepository: DeviceRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(AlertsState())
     val state: StateFlow<AlertsState> = _state
     private var cachedAlerts: List<Alert> = emptyList()
     private val formatter = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
     private var initialFilterApplied = false
+    private var assignedLookupDone = false
+    private var currentUserId: Long? = null
 
     init {
         viewModelScope.launch {
@@ -67,14 +72,28 @@ class AlertsViewModel @Inject constructor(
                 observeSessionUseCase(),
                 observeDevicesUseCase(),
                 preferencesManager.preferences
-            ) { _, devices, prefs ->
-                prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
-                    ?: devices.firstOrNull()
-            }.collect { device ->
-                device?.let {
-                    _state.update { current -> current.copy(deviceId = it.id) }
-                    observe(it.id)
+            ) { session, devices, prefs ->
+                Triple(session, devices, prefs)
+            }.collect { (session, devices, prefs) ->
+                if (currentUserId != session?.userId) {
+                    assignedLookupDone = false
                 }
+                currentUserId = session?.userId
+                val remoteAssigned = if (!assignedLookupDone && session?.userId != null) {
+                    assignedLookupDone = true
+                    runCatching { deviceRepository.getAssignedDeviceForUser(session.userId) }.getOrNull()
+                } else null
+                remoteAssigned?.id?.let { preferencesManager.setPrimaryDevice(it) }
+                val assigned = remoteAssigned?.toDomain()
+                    ?: session?.let { user -> devices.firstOrNull { it.assignedUserId == user.userId } }
+                val preferred = prefs.primaryDeviceId?.let { id -> devices.firstOrNull { it.id == id } }
+                val device = preferred ?: assigned ?: devices.firstOrNull()
+                device?.let {
+                    if (_state.value.deviceId != it.id) {
+                        _state.update { current -> current.copy(deviceId = it.id) }
+                        observe(it.id)
+                    }
+                } ?: _state.update { current -> current.copy(deviceId = null, alerts = emptyList(), isEmpty = true) }
             }
         }
     }
@@ -111,7 +130,12 @@ class AlertsViewModel @Inject constructor(
     }
 
     fun refresh() {
-        val deviceId = _state.value.deviceId ?: return
+        val deviceId = _state.value.deviceId ?: run {
+            val userId = currentUserId
+            val assigned = userId?.let { runCatching { deviceRepository.getAssignedDeviceForUser(it) }.getOrNull() }
+            assigned?.id?.also { preferencesManager.setPrimaryDevice(it) }
+            assigned?.toDomain()?.id
+        } ?: return
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching { refreshAlertsUseCase(deviceId) }.onFailure { error ->

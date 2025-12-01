@@ -42,9 +42,10 @@ fun ProfileScreen(onLoggedOut: () -> Unit = {}, viewModel: ProfileViewModel = hi
                     Text("Rol: ${session.role}")
                     Text("Plan: ${state.planName}")
                 }
-                Text("Dispositivo: ${state.device?.let { "${it.deviceUid} – ${it.name}" } ?: "Sin asignar"}", modifier = Modifier.padding(top = 8.dp))
+                val deviceName = state.assignedDevice?.name ?: state.device?.name ?: "Sin asignar"
+                Text("Dispositivo: $deviceName", modifier = Modifier.padding(top = 8.dp))
                 Text("Alertas críticas últimas 24h: ${state.criticalAlertsLast24h}")
-                Text("Última lectura: ${state.lastReadingSummary ?: "Sin lecturas"}")
+                Text("Última lectura: ${state.lastReadingSummary}")
                 RowWithSwitch(
                     label = "Notificaciones críticas",
                     checked = state.criticalNotifications,
