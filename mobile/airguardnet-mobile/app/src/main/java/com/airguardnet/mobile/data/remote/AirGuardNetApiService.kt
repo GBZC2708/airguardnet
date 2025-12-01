@@ -17,9 +17,6 @@ interface AirGuardNetApiService {
     @POST("login")
     suspend fun login(@Body body: AuthRequestDto): ApiResponse<AuthResponseDto>
 
-    @GET("users")
-    suspend fun getUsers(): ApiResponse<List<AuthResponseDto.UserDto>>
-
     @GET("devices")
     suspend fun getDevices(): ApiResponse<List<DeviceDto>>
 

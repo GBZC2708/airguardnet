@@ -2,6 +2,8 @@ package com.airguardnet.mobile.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import android.content.Context
+import androidx.room.Room
 import com.airguardnet.mobile.data.local.dao.AlertDao
 import com.airguardnet.mobile.data.local.dao.DeviceDao
 import com.airguardnet.mobile.data.local.dao.HotspotDao
@@ -24,4 +26,19 @@ abstract class AirGuardNetDatabase : RoomDatabase() {
     abstract fun readingDao(): ReadingDao
     abstract fun alertDao(): AlertDao
     abstract fun hotspotDao(): HotspotDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AirGuardNetDatabase? = null
+
+        fun getInstance(context: Context): AirGuardNetDatabase {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AirGuardNetDatabase::class.java,
+                    "airguardnet.db"
+                ).build().also { INSTANCE = it }
+            }
+        }
+    }
 }
