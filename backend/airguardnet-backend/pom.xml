@@ -64,6 +64,8 @@
         <module>notification-service</module>
         <!-- api-gateway -->
         <module>api-gateway</module>
+
+        <module>airguardnet-system-tests</module>
     </modules>
 
     <!-- sin dependencias ni plugins en el padre por ahora -->
