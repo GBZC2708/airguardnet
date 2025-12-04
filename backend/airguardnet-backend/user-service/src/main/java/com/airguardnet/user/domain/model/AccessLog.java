@@ -10,6 +10,7 @@ import java.time.Instant;
 public class AccessLog {
     private Long id;
     private Long userId;
+    private User user;
     private String action;
     private String ipAddress;
     private Instant createdAt;

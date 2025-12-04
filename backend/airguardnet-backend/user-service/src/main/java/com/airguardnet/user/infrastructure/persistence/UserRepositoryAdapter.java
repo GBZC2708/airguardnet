@@ -25,6 +25,11 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Optional<User> findByEmailIgnoreCase(String email) {
+        return userJpaRepository.findByEmailIgnoreCase(email).map(UserEntity::toDomain);
+    }
+
+    @Override
     public Optional<User> findById(Long id) {
         return userJpaRepository.findById(id).map(UserEntity::toDomain);
     }
