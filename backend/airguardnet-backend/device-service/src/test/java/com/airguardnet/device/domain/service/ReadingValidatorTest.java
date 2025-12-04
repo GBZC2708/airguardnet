@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 58
 package com.airguardnet.device.domain.service;
 
 import com.airguardnet.device.domain.model.Device;

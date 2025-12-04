@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 16–20
 package com.airguardnet.device.application.usecase;
 
 import com.airguardnet.device.domain.model.Alert;

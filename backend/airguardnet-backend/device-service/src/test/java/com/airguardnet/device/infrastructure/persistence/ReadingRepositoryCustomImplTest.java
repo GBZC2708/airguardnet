@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 59
 package com.airguardnet.device.infrastructure.persistence;
 
 import com.airguardnet.device.domain.model.Reading;

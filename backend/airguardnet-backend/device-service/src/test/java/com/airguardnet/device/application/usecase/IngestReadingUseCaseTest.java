@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 48–50
 package com.airguardnet.device.application.usecase;
 
 import com.airguardnet.common.exception.NotFoundException;

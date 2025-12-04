@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 57
 package com.airguardnet.device.application.mapper;
 
 import com.airguardnet.device.application.dto.DeviceListItemDto;
@@ -22,7 +23,9 @@ class DeviceMapperTest {
 
         DeviceListItemDto dto = deviceMapper.toListItem(device);
 
+        assertEquals(device.getId(), dto.getId());
         assertEquals(device.getStatus(), dto.getStatus());
         assertEquals(device.getName(), dto.getName());
+        assertEquals(device.getLastBatteryLevel(), dto.getLastBatteryLevel());
     }
 }

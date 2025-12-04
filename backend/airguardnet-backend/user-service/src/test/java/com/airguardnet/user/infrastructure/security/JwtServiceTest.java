@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 14–15
 package com.airguardnet.user.infrastructure.security;
 
 import io.jsonwebtoken.Claims;

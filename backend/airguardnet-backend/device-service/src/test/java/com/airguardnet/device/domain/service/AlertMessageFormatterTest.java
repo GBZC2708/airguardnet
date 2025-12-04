@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 56
 package com.airguardnet.device.domain.service;
 
 import com.airguardnet.device.domain.model.Alert;

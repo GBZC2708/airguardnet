@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 43
 package com.airguardnet.user.domain.service;
 
 import com.airguardnet.user.domain.repository.SystemLogRepositoryPort;
@@ -24,6 +25,9 @@ class SystemLogServiceTest {
     void logError_savesErrorType() {
         systemLogService.logError("device-service", "Intento de lectura desde dispositivo desconocido");
 
-        verify(systemLogRepositoryPort).save(argThat(log -> "ERROR".equals(log.getType())));
+        verify(systemLogRepositoryPort).save(argThat(log ->
+                "ERROR".equals(log.getType())
+                        && "device-service".equals(log.getSource())
+                        && "Intento de lectura desde dispositivo desconocido".equals(log.getMessage())));
     }
 }

@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 45–46
 package com.airguardnet.gateway.validation;
 
 import org.junit.jupiter.api.Test;

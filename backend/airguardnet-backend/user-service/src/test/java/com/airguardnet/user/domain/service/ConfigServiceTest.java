@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 41
 package com.airguardnet.user.domain.service;
 
 import com.airguardnet.user.domain.model.ConfigChangeLog;

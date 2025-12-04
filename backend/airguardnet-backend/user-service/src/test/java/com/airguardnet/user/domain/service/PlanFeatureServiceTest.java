@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 39–40
 package com.airguardnet.user.domain.service;
 
 import com.airguardnet.user.domain.model.Plan;
