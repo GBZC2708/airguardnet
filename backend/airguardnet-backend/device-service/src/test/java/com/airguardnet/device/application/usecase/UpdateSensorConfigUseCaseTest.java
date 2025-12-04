@@ -26,12 +26,13 @@ class UpdateSensorConfigUseCaseTest {
 
     @Test
     void execute_updatesValuesWhenFound() {
-        SensorConfig config = new SensorConfig();
-        config.setId(5L);
-        config.setSensorType("PM25");
-        config.setRecommendedMax(30.0);
-        config.setCriticalThreshold(60.0);
-        config.setUnit("old");
+        SensorConfig config = SensorConfig.builder()
+                .id(5L)
+                .sensorType("PM25")
+                .recommendedMax(30.0)
+                .criticalThreshold(60.0)
+                .unit("old")
+                .build();
 
         when(sensorConfigRepositoryPort.findById(5L)).thenReturn(Optional.of(config));
         when(sensorConfigRepositoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));

@@ -11,7 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class JwtServiceTest {
 
-    private static final String SECRET = "supersecretkeysupersecretkey12";
+    // 32+ chars (ahora 34) -> >= 256 bits
+    private static final String SECRET = "supersecretkeysupersecretkey1234";
 
     // Nro 14: Generar JWT incluye role y plan
     @Test

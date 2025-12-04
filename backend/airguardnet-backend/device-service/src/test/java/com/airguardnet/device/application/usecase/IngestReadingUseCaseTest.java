@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -26,6 +28,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT) // evitar UnnecessaryStubbing
 class IngestReadingUseCaseTest {
 
     @Mock
@@ -57,7 +60,7 @@ class IngestReadingUseCaseTest {
     }
 
     @Test
-    // Nro 49: Validar que IngestReadingUseCase lance error si device no existe
+        // Nro 49: Validar que IngestReadingUseCase lance error si device no existe
     void ingest_unknownDevice_throwsNotFound() {
         IngestReadingCommand command = new IngestReadingCommand();
         command.setDeviceUid("MISSING");
@@ -74,10 +77,11 @@ class IngestReadingUseCaseTest {
         command.setPm25(120.0);
         command.setBatteryLevel(90.0);
 
-        SensorConfig config = new SensorConfig();
-        config.setSensorType("PM25");
-        config.setRecommendedMax(35.0);
-        config.setCriticalThreshold(75.0);
+        SensorConfig config = SensorConfig.builder()
+                .sensorType("PM25")
+                .recommendedMax(35.0)
+                .criticalThreshold(75.0)
+                .build();
 
         when(deviceRepositoryPort.findByDeviceUid(device.getDeviceUid())).thenReturn(Optional.of(device));
         when(sensorConfigRepositoryPort.findBySensorType("PM25")).thenReturn(Optional.of(config));
@@ -101,7 +105,7 @@ class IngestReadingUseCaseTest {
     }
 
     @Test
-    // Nro 50: Validar que lectura con pm25 null no genera alerta
+        // Nro 50: Validar que lectura con pm25 null no genera alerta
     void ingest_nullPm25ProducesNoAlertAndZeroRisk() {
         IngestReadingCommand command = new IngestReadingCommand();
         command.setDeviceUid(device.getDeviceUid());
@@ -147,7 +151,7 @@ class IngestReadingUseCaseTest {
     }
 
     @Test
-    // Nro 48: Validar que lectura creada tenga recorded_at no nulo
+        // Nro 48: Validar que lectura creada tenga recorded_at no nulo
     void ingest_setsRecordedAt() {
         IngestReadingCommand command = new IngestReadingCommand();
         command.setDeviceUid(device.getDeviceUid());

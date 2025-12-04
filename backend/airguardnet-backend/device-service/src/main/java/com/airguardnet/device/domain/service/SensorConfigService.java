@@ -12,14 +12,20 @@ public class SensorConfigService {
     }
 
     public SensorConfig create(String sensorType, double recommended, double critical, Object createdBy) {
-        SensorConfig config = new SensorConfig();
-        config.setSensorType(sensorType);
-        config.setRecommendedMax(recommended);
-        config.setCriticalThreshold(critical);
-        config.setUnit("µg/m³");
+
+        // Usamos el builder de dominio en lugar de new SensorConfig()
+        SensorConfig.SensorConfigBuilder builder = SensorConfig.builder()
+                .sensorType(sensorType)
+                .recommendedMax(recommended)
+                .criticalThreshold(critical)
+                .unit("µg/m³");
+
         if (createdBy instanceof Number number) {
-            config.setCreatedById(number.longValue());
+            builder.createdById(number.longValue());
         }
+
+        SensorConfig config = builder.build();
+
         return sensorConfigRepositoryPort.save(config);
     }
 }

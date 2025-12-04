@@ -24,10 +24,10 @@ public class ConfigChangeLogEntity {
     public ConfigChangeLog toDomain() {
         return ConfigChangeLog.builder()
                 .id(id)
-                .parameterKey(parameterKey)
+                .key(parameterKey)   // ✅ mapea al campo "key" del dominio
                 .oldValue(oldValue)
                 .newValue(newValue)
-                .changedById(changedById)
+                .changedBy(null)     // ✅ por ahora no resolvemos el User
                 .changedAt(changedAt)
                 .build();
     }

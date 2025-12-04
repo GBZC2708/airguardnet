@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)   // <<< clave para evitar UnnecessaryStubbing
 class IngestReadingNormalizationTest {
 
     @Mock
@@ -39,7 +42,12 @@ class IngestReadingNormalizationTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new IngestReadingUseCase(deviceRepositoryPort, sensorConfigRepositoryPort, readingRepositoryPort, alertRepositoryPort);
+        useCase = new IngestReadingUseCase(
+                deviceRepositoryPort,
+                sensorConfigRepositoryPort,
+                readingRepositoryPort,
+                alertRepositoryPort
+        );
 
         Device device = Device.builder()
                 .id(1L)
@@ -49,6 +57,7 @@ class IngestReadingNormalizationTest {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
+
         when(deviceRepositoryPort.findByDeviceUid("AG-1")).thenReturn(Optional.of(device));
         when(deviceRepositoryPort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 

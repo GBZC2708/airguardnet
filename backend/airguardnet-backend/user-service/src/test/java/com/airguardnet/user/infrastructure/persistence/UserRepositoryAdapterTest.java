@@ -24,11 +24,21 @@ class UserRepositoryAdapterTest {
     private UserRepositoryAdapter userRepositoryAdapter;
 
     @Test
-    // Nro 60: Validar que recuperación de usuario por email no sea sensible a mayúsculas
+        // Nro 60: Validar que recuperación de usuario por email no sea sensible a mayúsculas
     void findByEmailIgnoreCase_uppercaseEmail_returnsUser() {
-        when(userJpaRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.of(User.builder().role("ADMIN").build()));
 
-        Optional<User> result = userRepositoryAdapter.findByEmailIgnoreCase("GERALD.ADMIN@AIRGUARDNET.LOCAL");
+        // Crear UserEntity con los campos mínimos que sí existen en la entidad real
+        UserEntity entity = new UserEntity();
+        entity.setId(1L);
+        entity.setEmail("gerald.admin@airguardnet.local");
+        entity.setRole("ADMIN");  // esta sí la usas en el dominio
+
+        when(userJpaRepository.findByEmailIgnoreCase(any()))
+                .thenReturn(Optional.of(entity));
+
+        Optional<User> result = userRepositoryAdapter.findByEmailIgnoreCase(
+                "GERALD.ADMIN@AIRGUARDNET.LOCAL"
+        );
 
         assertTrue(result.isPresent());
     }
