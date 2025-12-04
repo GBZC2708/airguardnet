@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 60
 package com.airguardnet.user.infrastructure.persistence;
 
 import com.airguardnet.user.domain.model.User;

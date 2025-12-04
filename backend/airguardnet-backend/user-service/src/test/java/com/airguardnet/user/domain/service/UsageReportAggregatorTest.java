@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 36–38
 package com.airguardnet.user.domain.service;
 
 import com.airguardnet.user.domain.model.User;

@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 9–13
 package com.airguardnet.user.application.usecase;
 
 import com.airguardnet.common.exception.UnauthorizedException;

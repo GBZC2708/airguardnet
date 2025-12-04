@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 66–67
 package com.airguardnet.device.domain.service;
 
 import com.airguardnet.device.domain.model.FirmwareVersion;

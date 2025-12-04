@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 1–8
 package com.airguardnet.user.application.usecase;
 
 import com.airguardnet.user.domain.repository.UserRepositoryPort;

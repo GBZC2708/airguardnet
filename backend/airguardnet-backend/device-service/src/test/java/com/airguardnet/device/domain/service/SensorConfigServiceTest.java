@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 51
 package com.airguardnet.device.domain.service;
 
 import com.airguardnet.device.domain.model.SensorConfig;

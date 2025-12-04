@@ -1,3 +1,4 @@
+// Cobertura matriz Nro 47
 package com.airguardnet.device.application.mapper;
 
 import com.airguardnet.device.application.dto.ReadingDto;
@@ -24,6 +25,7 @@ class ReadingMapperTest {
 
         assertEquals(reading.getId(), dto.getId());
         assertEquals(reading.getDeviceId(), dto.getDeviceId());
+        assertEquals(reading.getPm25(), dto.getPm25());
         assertEquals(reading.getRiskIndex(), dto.getRiskIndex());
     }
 }
