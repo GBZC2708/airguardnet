@@ -16,6 +16,7 @@ public class User {
     private String role;
     private String status;
     private Long planId;
+    private Plan plan;
     private Instant lastLoginAt;
     private int failedLoginCount;
     private Instant lockedUntil;

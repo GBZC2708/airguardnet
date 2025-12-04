@@ -8,6 +8,7 @@ import java.time.Instant;
 public class AccessLogDTO {
     private Long id;
     private Long userId;
+    private String userEmail;
     private String action;
     private String ipAddress;
     private Instant createdAt;
@@ -26,6 +27,9 @@ public class AccessLogDTO {
         AccessLogDTO dto = new AccessLogDTO();
         dto.id = log.getId();
         dto.userId = log.getUserId();
+        if (log.getUser() != null) {
+            dto.userEmail = log.getUser().getEmail();
+        }
         dto.action = log.getAction();
         dto.ipAddress = log.getIpAddress();
         dto.createdAt = log.getCreatedAt();
@@ -38,6 +42,10 @@ public class AccessLogDTO {
 
     public Long getUserId() {
         return userId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
     }
 
     public String getAction() {

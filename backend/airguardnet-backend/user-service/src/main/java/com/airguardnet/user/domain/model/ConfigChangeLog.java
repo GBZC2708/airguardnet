@@ -9,9 +9,9 @@ import java.time.Instant;
 @Builder
 public class ConfigChangeLog {
     private Long id;
-    private String parameterKey;
+    private String key;
     private String oldValue;
     private String newValue;
-    private Long changedById;
+    private User changedBy;
     private Instant changedAt;
 }

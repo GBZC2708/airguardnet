@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +56,7 @@ class IngestReadingUseCaseTest {
     }
 
     @Test
+    // Nro 49: Validar que IngestReadingUseCase lance error si device no existe
     void ingest_unknownDevice_throwsNotFound() {
         IngestReadingCommand command = new IngestReadingCommand();
         command.setDeviceUid("MISSING");
@@ -98,6 +100,7 @@ class IngestReadingUseCaseTest {
     }
 
     @Test
+    // Nro 50: Validar que lectura con pm25 null no genera alerta
     void ingest_nullPm25ProducesNoAlertAndZeroRisk() {
         IngestReadingCommand command = new IngestReadingCommand();
         command.setDeviceUid(device.getDeviceUid());
@@ -140,5 +143,21 @@ class IngestReadingUseCaseTest {
         assertEquals("ACTIVE", result.getDeviceStatus());
         assertTrue(result.getRiskIndex() <= 25);
         verify(deviceRepositoryPort).save(any(Device.class));
+    }
+
+    @Test
+    // Nro 48: Validar que lectura creada tenga recorded_at no nulo
+    void ingest_setsRecordedAt() {
+        IngestReadingCommand command = new IngestReadingCommand();
+        command.setDeviceUid(device.getDeviceUid());
+        command.setPm25(25.0);
+
+        when(deviceRepositoryPort.findByDeviceUid(device.getDeviceUid())).thenReturn(Optional.of(device));
+        when(sensorConfigRepositoryPort.findBySensorType("PM25")).thenReturn(Optional.empty());
+        when(readingRepositoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        useCase.ingest(command);
+
+        verify(readingRepositoryPort).save(argThat(reading -> reading.getRecordedAt() != null));
     }
 }

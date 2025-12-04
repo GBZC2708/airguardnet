@@ -11,6 +11,7 @@ public class Alert {
     private Long id;
     private Long deviceId;
     private Long readingId;
+    private Reading reading;
     private String severity;
     private String status;
     private String message;
