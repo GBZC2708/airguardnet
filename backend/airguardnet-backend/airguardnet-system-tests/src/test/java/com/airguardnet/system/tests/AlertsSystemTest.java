@@ -44,29 +44,61 @@ public class AlertsSystemTest extends BaseSeleniumTest {
      */
     @Test
     void alerta_cambiarEstadoEnProgreso() {
+
         // Paso 1: Login supervisor y navegar a alertas
         loginAsSupervisor();
         clickNavItem("Alertas");
 
         // Paso 2: Seleccionar la primera alerta pendiente
         wait10().until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table tbody tr")));
-        List<WebElement> pendingRows = driver.findElements(By.xpath("//table//tr[.//span[contains(.,'Pendiente')]]"));
+        List<WebElement> pendingRows = driver.findElements(
+                By.xpath("//table//tr[.//span[contains(.,'Pendiente')]]")
+        );
         if (pendingRows.isEmpty()) {
             pendingRows = driver.findElements(By.cssSelector("table tbody tr"));
         }
         pendingRows.get(0).click();
 
-        // Paso 3: En el drawer, cambiar estado a En proceso
-        wait10().until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h6[contains(.,'Detalle de alerta')]")));
-        driver.findElement(By.xpath("//label[contains(.,'Estado')]/following::div[contains(@role,'button')][1]")).click();
-        wait10().until(ExpectedConditions.elementToBeClickable(By.xpath("//li[normalize-space()='En proceso']"))).click();
-        wait10().until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(.,'Actualizar estado')]"))).click();
+        // Paso 3: Esperar drawer
+        wait10().until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//h6[contains(.,'Detalle de alerta')]")
+        ));
 
-        // Paso 4: Confirmar que se muestra el estado En proceso en la tabla
-        wait10().until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//div[contains(@role,'presentation')]//h6[contains(.,'Detalle de alerta')]")));
-        List<WebElement> inProgress = driver.findElements(By.xpath("//table//span[contains(.,'En proceso')]"));
+        // Seleccionar el combobox real
+        WebElement estadoSelect = wait10().until(
+                ExpectedConditions.elementToBeClickable(
+                        By.cssSelector("div[role='combobox']")
+                )
+        );
+        estadoSelect.click();
 
-        System.out.println("Prueba 7 finalizada, URL: " + driver.getCurrentUrl());
-        assertTrue(!inProgress.isEmpty(), "No se reflejó el estado EN PROCESO en la tabla de alertas");
+        // Seleccionar opción "En proceso"
+        WebElement opcionEnProceso = wait10().until(
+                ExpectedConditions.elementToBeClickable(
+                        By.xpath("//li[normalize-space()='En proceso']")
+                )
+        );
+        opcionEnProceso.click();
+
+        // Click en Actualizar
+        WebElement actualizarBtn = wait10().until(
+                ExpectedConditions.elementToBeClickable(
+                        By.xpath("//button[contains(.,'Actualizar estado')]")
+                )
+        );
+        actualizarBtn.click();
+
+        // ✔ Esperar que la tabla se actualice
+        wait10().until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//table//span[contains(.,'En proceso')]")
+        ));
+
+        List<WebElement> inProgress = driver.findElements(
+                By.xpath("//table//span[contains(.,'En proceso')]")
+        );
+
+        assertTrue(!inProgress.isEmpty(),
+                "No se reflejó el estado EN PROCESO en la tabla de alertas");
     }
+
 }
